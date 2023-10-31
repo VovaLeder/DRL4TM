@@ -1,4 +1,4 @@
-from math import atan2, sqrt, pi
+from math import atan2, sqrt, pi, asin, acos
 
 CURVES = [
     [272, 0, 544],
@@ -9,7 +9,7 @@ CURVES = [
     [752, 0, 544],
 ]
 
-def get_info_from_center_line_by2curves(car_pos, curve_pos1, curve_pos2):
+def get_info_from_center_line_by2curves(car_pos, car_rot, curve_pos1, curve_pos2, is_upper_curve: bool):
     r =  abs(curve_pos2[0] - curve_pos1[0]) / 2
     center_pos = (curve_pos1[0] + curve_pos2[0]) / 2, curve_pos1[1], curve_pos1[2]
     angle = atan2(car_pos[2] - center_pos[2], car_pos[0] - center_pos[0])
@@ -17,24 +17,77 @@ def get_info_from_center_line_by2curves(car_pos, curve_pos1, curve_pos2):
     y = car_pos[2] - center_pos[2]
     h = sqrt(x**2 + y**2)
     distance = r - h
-    return distance, angle * 180 / pi
+    ret_angle = angle + (pi/2 if is_upper_curve else -pi/2) - atan2(car_rot[0, 0], car_rot[0, 2])
+    if (ret_angle > pi):
+        ret_angle -= 2*pi
+    return (distance,
+            ret_angle,
+            abs(angle),
+            -1 if is_upper_curve else 1)
 
-def get_info_from_center_line(car_pos):
+def get_info_from_center_line(car_pos, car_rot):
     c1, c2 = 0, 0
         
     curves = list(map(lambda el: None if el[0] == len(CURVES) - 1 else [el[1], CURVES[el[0] + 1]], enumerate(CURVES)))
-    i = 0
+    i = ii = 0
     for c in curves:
         if c == None:
             break
         if (car_pos[0] >= c[0][0] - 16 and car_pos[0] <= c[1][0] + 16):
             if car_pos[2] >= 544 and i % 2 == 0 or car_pos[2] <= 544 and i % 2 == 1:
                 c1, c2 = c
+                ii = i
         i += 1
 
-    return get_info_from_center_line_by2curves(car_pos, c1, c2)
+    return get_info_from_center_line_by2curves(car_pos, car_rot, c1, c2, ii % 2 == 1)
 
 if __name__ == '__main__':
     print(get_info_from_center_line(
         [377.5801086425781, 41.35907745361328, 530.1361083984375]
     ))
+
+"""
+Coords
+
+Z:
+15: 496 - upper curve
+17: 592 - lower curve
+
+X:
+272 - start (8)
+320 - 1st curve
+368 - 1st-2nd curves transition
+416 - 2nd curve
+464 - 2nd-3rd curves transition
+512 - 3rd curve
+560 - 3rd-4th curves transition
+608 - 4th curve
+656 - 4th-5th curves transition
+704 - 5th curve
+752 - finish (23)
+"""
+
+"""
+Quats:
+
+start:
+[[1.0 2.7062228582508396e-06 1.4599955875382875e-06] --> 1; 0
+ [-2.7062237677455414e-06 1.0 5.685234327756916e-07]
+ [-1.4599939959225594e-06 -5.685274118150119e-07 1.0]]
+
+right:
+[[-2.0294960449973587e-06 -3.233347160858102e-05 -0.9999999403953552] --> 0; -1
+ [-0.0001407439704053104 1.0 -3.233318784623407e-05]
+ [0.9999999403953552 0.00014074389764573425 -2.0265579223632812e-06]] 
+
+left:
+[[-4.7792468649277e-07 -9.896371921058744e-05 1.0] --> 0; 1
+ [-3.300890602986328e-05 1.0 9.896370465867221e-05]
+ [-1.0 -3.30088623741176e-05 -4.76837158203125e-07]]
+
+back:
+[[-1.0 0.00013821393076796085 1.4387745750354952e-06] --> -1; 0
+ [0.00013821393076796085 1.0 -6.6381685428495985e-06]
+ [-1.4396920278159087e-06 -6.63796936350991e-06 -1.0]]
+
+"""

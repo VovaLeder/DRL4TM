@@ -2,8 +2,18 @@ from tminterface.client import Client
 from tminterface.interface import TMInterface
 from time import sleep
 from utils import get_info_from_center_line
+from math import asin, pi       
 
-
+"""
+speed
+acceleration
+turning_rate
+lateral_velocity
+distance_to_centerline +
+angle_to_centerline +
+next_curve_distance +
+next_curve_direction +
+"""
 
 class SimStateClient(Client):
     """
@@ -28,59 +38,13 @@ if __name__ == '__main__':
         sleep(1)
         pos = client.sim_state.dyna.current_state.position
         rot = client.sim_state.dyna.current_state.rotation
-        print(rot[0, 0], rot[0, 2])
-        # print(get_info_from_center_line(pos))
-"""
-[0.32805970311164856 3.503600964904763e-07 0.944657027721405 3.675984316942049e-07]
-[377.5801086425781 41.35907745361328 530.1361083984375]
-"""
+        # print(rot[0, 0], rot[0, 2])   
 
-
-"""
-Coords
-
-Z:
-15: 496 - upper curve
-17: 592 - lower curve
-
-X:
-272 - start (8)
-320 - 1st curve
-368 - 1st-2nd curves transition
-416 - 2nd curve
-464 - 2nd-3rd curves transition
-512 - 3rd curve
-560 - 3rd-4th curves transition
-608 - 4th curve
-656 - 4th-5th curves transition
-704 - 5th curve
-752 - finish (23)
-"""
-
-"""
-Quats:
-
-start:
-[[1.0 2.7062228582508396e-06 1.4599955875382875e-06] --> 1; 0
- [-2.7062237677455414e-06 1.0 5.685234327756916e-07]
- [-1.4599939959225594e-06 -5.685274118150119e-07 1.0]]
-
-right:
-[[-2.0294960449973587e-06 -3.233347160858102e-05 -0.9999999403953552] --> 0; -1
- [-0.0001407439704053104 1.0 -3.233318784623407e-05]
- [0.9999999403953552 0.00014074389764573425 -2.0265579223632812e-06]] 
-
-left:
-[[-4.7792468649277e-07 -9.896371921058744e-05 1.0] --> 0; 1
- [-3.300890602986328e-05 1.0 9.896370465867221e-05]
- [-1.0 -3.30088623741176e-05 -4.76837158203125e-07]]
-
-back:
-[[-1.0 0.00013821393076796085 1.4387745750354952e-06] --> -1; 0
- [0.00013821393076796085 1.0 -6.6381685428495985e-06]
- [-1.4396920278159087e-06 -6.63796936350991e-06 -1.0]]
-
-"""
+        (distance_to_centerline,
+         angle_to_centerline,
+         some_angle,
+         next_curve_direction) = get_info_from_center_line(pos, rot)
+        print(get_info_from_center_line(pos, rot))
 
 """
 
