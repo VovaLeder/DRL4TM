@@ -1,4 +1,4 @@
-from math import atan2, sqrt, pi, asin, acos
+from math import atan2, sqrt, pi
 
 CURVES = [
     [272, 0, 544],
@@ -20,7 +20,7 @@ def get_info_from_center_line_by2curves(car_pos, car_rot, curve_pos1, curve_pos2
     ret_angle = angle + (pi/2 if is_upper_curve else -pi/2) - atan2(car_rot[0, 0], car_rot[0, 2])
     if (ret_angle > pi):
         ret_angle -= 2*pi
-    return (distance,
+    return (distance * (-1 if is_upper_curve else 1),
             ret_angle,
             abs(angle),
             -1 if is_upper_curve else 1)
@@ -39,12 +39,28 @@ def get_info_from_center_line(car_pos, car_rot):
                 ii = i
         i += 1
 
+    if (c1 == 0):
+        if car_pos[0] < 544:
+            return car_pos[0] - 272, atan2(car_rot[0, 0], car_rot[0, 2]) - pi/2, (544 - car_pos[2]) / 20, -1
+        elif car_pos[0] > 544:
+            return 752 - car_pos[0], atan2(car_rot[0, 0], car_rot[0, 2]) - pi/2, (car_pos[2] - 534) / 20, 0
+
     return get_info_from_center_line_by2curves(car_pos, car_rot, c1, c2, ii % 2 == 1)
 
+def normalize_info(info):
+    result = info
+    result.linear_speed = info.linear_speed / 100
+    result.angular_speed = info.angular_speed / 30
+    result.distance_to_centerline = info.distance_to_centerline / 14
+    result.angle_to_centerline = info.angle_to_centerline / pi
+    result.next_curve_distance = info.next_curve_distance / pi
+    result.next_curve_direction = info.next_curve_direction
+    return (result.linear_speed, result.angular_speed, result.distance_to_centerline, result.angle_to_centerline, result.next_curve_distance, result.next_curve_direction)
+
 if __name__ == '__main__':
-    print(get_info_from_center_line(
-        [377.5801086425781, 41.35907745361328, 530.1361083984375]
-    ))
+    print('wring file dumbass')
+
+# [283.6285400390625 41.373592376708984 533.5134887695312]
 
 """
 Coords

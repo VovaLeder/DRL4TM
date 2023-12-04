@@ -4,7 +4,7 @@ import numpy as np
 
 # gas, break, steer
 ACTION_SPACE = Tuple((Discrete(2), Discrete(2), Box(-1, 1, (1,))))
-OBSERVATION_SPACE = Box(-1, 1, (8,))
+OBSERVATION_SPACE = Box(-1, 1, (6,))
 
 class TMEnv(Env):
     def __init__(self):

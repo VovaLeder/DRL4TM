@@ -1,19 +1,44 @@
 from tminterface.client import Client
 from tminterface.interface import TMInterface
 from time import sleep
-from utils import get_info_from_center_line
-from math import asin, pi       
+from utils import get_info_from_center_line, normalize_info
 
 """
 speed
 acceleration
 turning_rate
 lateral_velocity
-distance_to_centerline +
-angle_to_centerline +
-next_curve_distance +
-next_curve_direction +
+distance_to_centerline
+angle_to_centerline
+next_curve_distance
+next_curve_direction
 """
+
+class SimState():
+    def __init__(self) -> None:
+        #                     Maxes
+        self.linear_speed = 0 # 240 (about 840 in TM) (about 70 actual in the first map)
+        self.angular_speed = 0 # Got to 30 max on grass, might want to drop or change
+        self.distance_to_centerline = 0 # 14
+        self.angle_to_centerline = 0 # pi
+        self.next_curve_distance = 0 # pi on curves and about 0.5 on straight
+        self.next_curve_direction = 0 # -1 and 1, 0 on road to fin
+
+    def get_info_from_center_line(self, arg):
+        self.distance_to_centerline, self.angle_to_centerline, self.next_curve_distance, self.next_curve_direction = arg
+
+    def normalize(self):
+        self.linear_speed, self.angular_speed, self.distance_to_centerline, self.angle_to_centerline, self.next_curve_distance, self.next_curve_direction = normalize_info(self)
+
+    def __str__(self):
+        return f"""
+        lin_speed: {self.linear_speed}
+        ang_speed: {self.angular_speed}
+        dist_to_center: {self.distance_to_centerline}
+        angle_to_centerline: {self.angle_to_centerline}
+        next_curve_dist: {self.next_curve_distance}
+        next_curve_dir: {self.next_curve_direction}
+        """
 
 class SimStateClient(Client):
     """
@@ -28,23 +53,42 @@ class SimStateClient(Client):
     def on_run_step(self, iface, _time: int):
         self.sim_state = iface.get_simulation_state()
 
-if __name__ == '__main__':
-    client = SimStateClient()
-    interface = TMInterface()
+class SimStateInterface():
+    def __init__(self):
+        self.client = SimStateClient()
+        self.interface = TMInterface()
+        
+        self.interface.register(self.client)
 
-    interface.register(client)
+        self.state = SimState()
+
+    def step(self):
+        pos = self.client.sim_state.dyna.current_state.position
+        rot = self.client.sim_state.dyna.current_state.rotation 
+        linear_speed = self.client.sim_state.dyna.current_state.linear_speed
+
+        self.state.get_info_from_center_line(get_info_from_center_line(pos, rot))
+        self.state.linear_speed = linear_speed[0] * rot[0, 2] + linear_speed[2] * rot[0, 0]
+        self.state.angular_speed = - linear_speed[0] * rot[0, 0] + linear_speed[2] * rot[0, 2]
+
+        self.state.normalize()
+
+if __name__ == '__main__':
+    interface = SimStateInterface()
 
     while True:
-        sleep(1)
-        pos = client.sim_state.dyna.current_state.position
-        rot = client.sim_state.dyna.current_state.rotation
-        # print(rot[0, 0], rot[0, 2])   
+        sleep(0.5)
 
-        (distance_to_centerline,
-         angle_to_centerline,
-         some_angle,
-         next_curve_direction) = get_info_from_center_line(pos, rot)
-        print(get_info_from_center_line(pos, rot))
+        # rot = interface.client.sim_state.dyna.current_state.rotation 
+        # linear_speed = interface.client.sim_state.dyna.current_state.linear_speed
+        # print(- linear_speed[0] * rot[0, 0] + linear_speed[2] * rot[0, 2])
+
+        interface.step()
+
+        print(interface.state)
+
+
+
 
 """
 
