@@ -30,6 +30,9 @@ class SimState():
     def normalize(self):
         self.linear_speed, self.angular_speed, self.distance_to_centerline, self.angle_to_centerline, self.next_curve_distance, self.next_curve_direction = normalize_info(self)
 
+    def get_state(self):
+        return [self.linear_speed, self.angular_speed, self.distance_to_centerline, self.angle_to_centerline, self.next_curve_distance, self.next_curve_direction]
+    
     def __str__(self):
         return f"""
         lin_speed: {self.linear_speed}
@@ -48,9 +51,11 @@ class SimStateClient(Client):
 
     def __init__(self):
         super().__init__()
+        self.iface = None
         self.sim_state = None
 
     def on_run_step(self, iface, _time: int):
+        self.iface = iface
         self.sim_state = iface.get_simulation_state()
 
 class SimStateInterface():
@@ -61,6 +66,11 @@ class SimStateInterface():
         self.interface.register(self.client)
 
         self.state = SimState()
+        print('hey')
+
+    def get_state(self):
+        self.step()
+        return self.state.get_state()
 
     def step(self):
         pos = self.client.sim_state.dyna.current_state.position
@@ -73,20 +83,19 @@ class SimStateInterface():
 
         self.state.normalize()
 
+    def reset(self):
+        self.interface.respawn()
+
+    def set_actions(self, **kwargs):
+        self.interface.set_input_state(**kwargs)
+
 if __name__ == '__main__':
     interface = SimStateInterface()
-
+    sleep(0.5)
+    interface.reset()
     while True:
         sleep(0.5)
-
-        # rot = interface.client.sim_state.dyna.current_state.rotation 
-        # linear_speed = interface.client.sim_state.dyna.current_state.linear_speed
-        # print(- linear_speed[0] * rot[0, 0] + linear_speed[2] * rot[0, 2])
-
-        interface.step()
-
-        print(interface.state)
-
+        print(interface.get_state())
 
 
 
