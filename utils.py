@@ -1,6 +1,12 @@
 from math import atan2, sqrt, pi
 
-CURVES = [
+from constants import LEVEL
+
+START_0 = 459.2
+END_0 = 809.6
+CENTER_0 = 368
+
+CURVES_1 = [
     [272, 0, 544],
     [366, 0, 544],
     [464, 0, 544],
@@ -8,6 +14,10 @@ CURVES = [
     [656, 0, 544],
     [752, 0, 544],
 ]
+
+def get_info_from_center_line_0(car_pos, car_rot):
+    return CENTER_0 - car_pos[0], atan2(car_rot[0, 2], car_rot[0, 0]), END_0 - car_pos[2], 0
+
 
 def get_info_from_center_line_by2curves(car_pos, car_rot, curve_pos1, curve_pos2, is_upper_curve: bool):
     r =  abs(curve_pos2[0] - curve_pos1[0]) / 2
@@ -25,10 +35,10 @@ def get_info_from_center_line_by2curves(car_pos, car_rot, curve_pos1, curve_pos2
             abs(angle),
             -1 if is_upper_curve else 1)
 
-def get_info_from_center_line(car_pos, car_rot):
+def get_info_from_center_line_1(car_pos, car_rot):
     c1, c2 = 0, 0
         
-    curves = list(map(lambda el: None if el[0] == len(CURVES) - 1 else [el[1], CURVES[el[0] + 1]], enumerate(CURVES)))
+    curves = list(map(lambda el: None if el[0] == len(CURVES_1) - 1 else [el[1], CURVES_1[el[0] + 1]], enumerate(CURVES_1)))
     i = ii = 0
     for c in curves:
         if c == None:
@@ -49,16 +59,16 @@ def get_info_from_center_line(car_pos, car_rot):
 
 def normalize_info(info):
     result = info
-    result.linear_speed = info.linear_speed / 100
+    result.linear_speed = info.linear_speed / (300 if LEVEL == 0 else 70)
     result.angular_speed = info.angular_speed / 30
     result.distance_to_centerline = info.distance_to_centerline / 14
     result.angle_to_centerline = info.angle_to_centerline / pi
-    result.next_curve_distance = info.next_curve_distance / pi
+    result.next_curve_distance = info.next_curve_distance / ((END_0 - START_0 + 65) if LEVEL == 0 else pi)
     result.next_curve_direction = info.next_curve_direction
     return (result.linear_speed, result.angular_speed, result.distance_to_centerline, result.angle_to_centerline, result.next_curve_distance, result.next_curve_direction)
 
 if __name__ == '__main__':
-    print('wring file dumbass')
+    print('wrong file dumbass')
 
 # [283.6285400390625 41.373592376708984 533.5134887695312]
 

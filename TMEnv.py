@@ -1,14 +1,15 @@
 from gym import Env
-from gym.spaces import Box
+from gym.spaces import MultiBinary, Box
 import numpy as np
 
 import time
 from GameLaunch import GameLauncher
 from TMInterface import SimStateInterface
+from constants import LEVEL
 
 # gas, break, steer
-ACTION_SPACE = Box(-1, 1, (3,))
-OBSERVATION_SPACE = Box(-0.5, 1, (6,))
+ACTION_SPACE = MultiBinary((4,))
+OBSERVATION_SPACE = Box(-1, 1, (6,))
 
 class TMEnv(Env):
     def __init__(self):
@@ -22,45 +23,50 @@ class TMEnv(Env):
             input("press enter when game is ready")
             time.sleep(4)
         self.interface = SimStateInterface()
+        time.sleep(0.3)
+        self.interface.interface.prevent_simulation_finish()
 
         # self.simthread = ThreadedClient()
         self.total_reward = 0.0
         self.n_steps = 0
-        self.max_steps = 1000
+        self.max_steps = 250
         self.command_frequency = 50
         self.last_action = None
         self.low_speed_steps = 0
 
     def action_to_command(self, action):
-        gas, breaking, steer = action
+        gas, braking, left, right = action
         actions = {
-            'gas': int(gas*65536),
-            'break': breaking >= 0.1,
-            'steer': int(steer*65536),
+            'accelerate': gas,
+            'brake': braking,
+            'left': left,
+            'right': right
         }
+        # print(f'actions: {actions}')
         self.interface.set_actions(**actions)
 
     def _restart_race(self):
         self.interface.reset()
 
     def step(self, action):
+        print(f'action: {action}')
         self.last_action = action
 
         self.action_to_command(action)
         done = (
             True
-            if self.n_steps >= self.max_steps or self.total_reward < -300
+            if self.n_steps >= self.max_steps or self.total_reward < -60 or self.total_reward > 500
             else False
         )
         self.total_reward += self.reward
         self.n_steps += 1
         info = {}
-        time.sleep(self.command_frequency * 10e-3)
+        time.sleep(self.command_frequency * 1e-3)
         return self.observation, self.reward, done, info
 
     def render(self):
         print(f"total reward: {self.total_reward}")
-        print(f"speed: {self.speed}")
+        # print(f"speed: {self.speed}")
         # print(f"time = {self.state.time}")
     
     def reset(self):
@@ -81,40 +87,38 @@ class TMEnv(Env):
         return np.array(self.interface.get_state())
 
     @property
-    def speed(self):
-        return self.state[0]
-
-    @property
     def observation(self):
         return self.state
 
     @property
     def reward(self):
-        speed = self.speed
-        # if self.state.time < 3000:
-        #     return 0
+        cur_state = self.state
+        if (LEVEL == 0):
+            reward = 0
 
-        speed_reward = speed / 400
-        constant_reward = -0.3
-        gas_reward = self.last_action[0] * 2
+            speed = cur_state[0]
 
-        # if self.last_action[0] < 0:
-        #     constant_reward -= 10
-        #     gas_reward = 0
+            # print(f"speed: {speed}")
+            # print(f"state: {cur_state}")
+            if (speed > 0.5):
+                reward += speed * 10
+            elif (speed > 0.3):
+                reward += speed * 5
+            elif (speed > 0.2):
+                reward += speed * 2.5
+            elif (speed > 0.1):
+                reward += speed
+            elif (speed > -0.05):
+                reward += speed / 5
+            else:
+                reward -= 0.5
+            
 
-        # if min(self.observation) < 0.06:
-        #     constant_reward -= 100
+            # reward += (0.85 - cur_state[4]) * 15
+            if (cur_state[4] > 0.87):
+                reward -= 100
+            if (cur_state[4] < 0.01):
+                reward += 1000
 
-        if 10 < speed < 100:
-            speed_reward = -1
-            gas_reward = 0
-
-        elif speed < 10:
-            self.low_speed_steps += 1
-            speed_reward = -5 * self.low_speed_steps
-            gas_reward = 0
-
-        else:
-            self.low_speed_steps = 0
-
-        return speed_reward + constant_reward + gas_reward
+            # print(reward)
+            return reward

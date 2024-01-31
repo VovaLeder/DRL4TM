@@ -1,3 +1,4 @@
+import time
 import numpy as np
 import torch
 import torch.nn as nn
@@ -60,6 +61,7 @@ class EpsilonGreedyDQN(Agent):
 if __name__ == "__main__":
     input_size = 17
     device = "cuda"
+    time.sleep(0.5)
     agent = EpsilonGreedyDQN(input_size, device)
 
     for step in range(10):

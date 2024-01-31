@@ -4,10 +4,12 @@ import numpy as np
 import random
 from typing import Generic, Iterable, TypeVar
 
-from agent import Agent, RandomGamepadAgent
+from agent import Agent, RandomArrowsAgent
 from TMEnv import TMEnv
 
 import time
+
+from gym.spaces import MultiBinary
 
 T = TypeVar("T")
 
@@ -82,7 +84,6 @@ def play_episode(
         else:
             action = agent.act(observation)
         
-        print(action)
         observation, reward, done, info = env.step(action)
         # print(observation, reward)
         transition = Transition(prev_obs, action, observation, reward, done)
@@ -97,6 +98,6 @@ def play_episode(
 if __name__ == "__main__":
     env = TMEnv()
     time.sleep(0.5)
-    agent = RandomGamepadAgent()
+    agent = RandomArrowsAgent(MultiBinary((4,)))
     while True:
         episode = play_episode(agent, env)

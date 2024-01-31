@@ -1,6 +1,8 @@
 from pygbx import Gbx, GbxType
 
-g = Gbx('C:\\Users\\vovaleder\\Documents\\TmForever\\Tracks\Challenges\\My Challenges\\Level1Orig.Challenge.Gbx')
+level = 0
+
+g = Gbx(f'C:\\Users\\vovaleder\\Documents\\TmForever\\Tracks\Challenges\\My Challenges\\Level{level}Orig.Challenge.Gbx')
 challenges = g.get_classes_by_ids([GbxType.CHALLENGE, GbxType.CHALLENGE_OLD])
 if not challenges:
     quit()

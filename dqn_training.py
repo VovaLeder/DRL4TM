@@ -11,7 +11,7 @@ class DQN_trainer:
     def __init__(self, batch_size=32, N_epochs=100):
         self.N_epochs = N_epochs
         self.GAMMA = 0.999
-        self.target_update = 2
+        self.target_update = 3
         self.batch_size = batch_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.buffer = Buffer(capacity=10000)
@@ -29,7 +29,7 @@ class DQN_trainer:
             episode = filter(lambda transition: not transition.done, episode)
             self.buffer.append_multiple(list(episode))
 
-    def optimze_step(self):
+    def optimize_step(self):
         batch = self.buffer.sample(self.batch_size)
         inv_map = {tuple(v): k for k, v in self.agent.action_correspondance.items()}
         state_batch = torch.tensor(
@@ -46,7 +46,7 @@ class DQN_trainer:
         ).to(self.device)
         state_action_values = (
             self.agent.policy(state_batch)
-            .gather(1, action_batch.unsqueeze(1))
+            .gather(1, action_batch.unsqueeze(1).type(torch.int64))
             .squeeze(1)
         )
         # print(state_action_values.shape)
@@ -61,7 +61,29 @@ class DQN_trainer:
         loss.backward()
         self.optimizer.step()
 
+    def train(self):
+        for epoch in range(self.N_epochs):
+            self.env.reset()
+            episode = []
+            observation = self.env.reset()
+            done = False
+            step = 0
+            while not done:
+                prev_obs = observation
+                action = self.agent.act(observation)
+                print(action)
+                observation, reward, done, info = self.env.step(action)
+                transition = Transition(prev_obs, action, observation, reward, done)
+                episode.append(transition)
+                step += 1
+                self.env.render()
+                self.optimize_step()
+
+            self.buffer.append_multiple(list(episode))
+            if epoch % self.target_update == 0:
+                self.agent.target.load_state_dict(self.agent.policy.state_dict())
+
 
 if __name__ == "__main__":
-    trainer = DQN_trainer(N_epochs=200)
+    trainer = DQN_trainer(N_epochs=100)
     trainer.train()

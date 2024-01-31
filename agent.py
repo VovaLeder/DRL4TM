@@ -8,6 +8,11 @@ class Agent(ABC):
     def act(self, observation):
         raise NotImplementedError
 
-class RandomGamepadAgent(Agent):
+class RandomArrowsAgent(Agent):
+    def __init__(self, action_space):
+        self.action_space = action_space
+
     def act(self, observation):
-        return np.random.uniform(-1, 1, size=(3,))
+        action = self.action_space.sample()
+
+        return action
