@@ -5,13 +5,16 @@ from TMEnv import TMEnv
 from training_utils import Buffer, Transition, play_episode
 from dqn_agent import EpsilonGreedyDQN
 import numpy as np
+from os import path
+import datetime
 
+base_path = path.join(path.curdir, 'model_dicts')
 
 class DQN_trainer:
-    def __init__(self, batch_size=32, N_epochs=100):
-        self.N_epochs = N_epochs
+    def __init__(self, save_path, batch_size=32, N_epochs=100, load_path=None):
+        self.N_epochs = N_epochs 
         self.GAMMA = 0.999
-        self.target_update = 3
+        self.target_update = 4 
         self.batch_size = batch_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.buffer = Buffer(capacity=10000)
@@ -22,6 +25,9 @@ class DQN_trainer:
         self.optimizer = optim.Adam(self.agent.policy.parameters(), lr=0.001)
         self.loss = nn.SmoothL1Loss()
         self.fill_buffer()
+
+        self.save_path = save_path
+        self.load_path = load_path
 
     def fill_buffer(self):
         while len(self.buffer) < self.batch_size:
@@ -62,6 +68,8 @@ class DQN_trainer:
         self.optimizer.step()
 
     def train(self):
+        if (self.load_path is not None):
+            self.agent.target.load_state_dict(torch.load(self.load_path))
         for epoch in range(self.N_epochs):
             self.env.reset()
             episode = []
@@ -71,7 +79,7 @@ class DQN_trainer:
             while not done:
                 prev_obs = observation
                 action = self.agent.act(observation)
-                print(action)
+                # print(action)
                 observation, reward, done, info = self.env.step(action)
                 transition = Transition(prev_obs, action, observation, reward, done)
                 episode.append(transition)
@@ -80,10 +88,14 @@ class DQN_trainer:
                 self.optimize_step()
 
             self.buffer.append_multiple(list(episode))
+            print(f"EPOCH: {epoch}")
             if epoch % self.target_update == 0:
                 self.agent.target.load_state_dict(self.agent.policy.state_dict())
+                torch.save(self.agent.policy.state_dict(), self.save_path)
 
 
 if __name__ == "__main__":
-    trainer = DQN_trainer(N_epochs=100)
+    save_path = path.join(base_path, str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', ''))
+    load_path = path.join(base_path, 'secondsave')
+    trainer = DQN_trainer(N_epochs=300, save_path=save_path, load_path=load_path)
     trainer.train()

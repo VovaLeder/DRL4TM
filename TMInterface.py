@@ -31,10 +31,18 @@ class SimStateClient(Client):
         super().__init__()
         self.iface = None
         self.sim_state = None
+        self.actions = None
+        self.should_reset = False
 
-    def on_run_step(self, iface, _time: int):
+    def on_run_step(self, iface: TMInterface, _time: int):
         self.iface = iface
         self.sim_state = iface.get_simulation_state()
+        if self.should_reset:
+            self.should_reset = False
+            self.iface.respawn()
+        if self.actions != None:
+            self.iface.set_input_state(**self.actions)
+            
 
 class SimStateInterface():
     def __init__(self):
@@ -65,17 +73,17 @@ class SimStateInterface():
         self.state.normalize()
 
     def reset(self):
-        self.interface.respawn()
+        self.client.should_reset = True
 
     def set_actions(self, **kwargs):
-        self.interface.set_input_state(**kwargs)
+        self.client.actions = kwargs
 
 if __name__ == '__main__':
     interface = SimStateInterface()
     sleep(0.5)
     interface.reset()
     while True:
-        sleep(0.5)
+        sleep(0.1)
         interface.step()
         print(interface.state)
 
