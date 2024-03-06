@@ -10,7 +10,7 @@ class DQN(nn.Module):
         super().__init__()
         self.fc1 = nn.Linear(input_size, mid_size)
         self.fc2 = nn.Linear(mid_size, output_size)
-        self.dropout = nn.Dropout(p=0.5)
+        self.dropout = nn.Dropout(p=p)
 
     def forward(self, observation):
         x = torch.Tensor(observation).to("cuda")
@@ -59,7 +59,7 @@ class EpsilonGreedyDQN(Agent):
 
 
 if __name__ == "__main__":
-    input_size = 17
+    input_size = 6
     device = "cuda"
     time.sleep(0.5)
     agent = EpsilonGreedyDQN(input_size, device)

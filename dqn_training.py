@@ -14,7 +14,7 @@ class DQN_trainer:
     def __init__(self, save_path, batch_size=32, N_epochs=100, load_path=None):
         self.N_epochs = N_epochs 
         self.GAMMA = 0.999
-        self.target_update = 4 
+        self.target_update = 3
         self.batch_size = batch_size
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.buffer = Buffer(capacity=10000)
@@ -88,14 +88,15 @@ class DQN_trainer:
                 self.optimize_step()
 
             self.buffer.append_multiple(list(episode))
-            print(f"EPOCH: {epoch}")
             if epoch % self.target_update == 0:
+                print(f"EPOCH: {epoch}")
                 self.agent.target.load_state_dict(self.agent.policy.state_dict())
                 torch.save(self.agent.policy.state_dict(), self.save_path)
 
 
 if __name__ == "__main__":
     save_path = path.join(base_path, str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', ''))
-    load_path = path.join(base_path, 'secondsave')
-    trainer = DQN_trainer(N_epochs=300, save_path=save_path, load_path=load_path)
+    load_path = path.join(base_path, '0005_just_press_w_1')
+    # load_path = None
+    trainer = DQN_trainer(N_epochs=3000, save_path=save_path, load_path=load_path)
     trainer.train()
