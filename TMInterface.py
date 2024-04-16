@@ -1,5 +1,5 @@
 from tminterface.client import Client
-from tminterface.interface import TMInterface
+from tminterface.interface import TMInterface, SimStateData
 from time import sleep
 from SimStates import SimState0, SimState1
 from constants import LEVEL
@@ -29,8 +29,8 @@ class SimStateClient(Client):
 
     def __init__(self):
         super().__init__()
-        self.iface = None
-        self.sim_state = None
+        self.iface: TMInterface = None
+        self.sim_state: SimStateData = None
         self.actions = None
         self.should_reset = False
 

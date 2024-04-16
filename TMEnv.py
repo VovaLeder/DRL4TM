@@ -11,7 +11,7 @@ from constants import LEVEL
 ACTION_SPACE = MultiBinary((4,))
 OBSERVATION_SPACE = Box(-1, 1, (6,))
 
-GAME_SPEED = 5 # default = 1
+GAME_SPEED = 1 # default = 1
 
 class TMEnv(Env):
     def __init__(self):
@@ -38,7 +38,7 @@ class TMEnv(Env):
         self.total_reward = 0.0
         self.n_steps = 0
         self.max_steps = 2000 / GAME_SPEED
-        self.command_frequency = (1.01e-2) / GAME_SPEED
+        self.command_frequency = 0.05 / GAME_SPEED
 
         # PrevStepValues
         

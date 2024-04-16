@@ -41,18 +41,15 @@ class EpsilonGreedyDQN(Agent):
         self.target.to(self.device)
         self.step = 0
 
-    def epsilon(self):
-        return self.eps_end + (self.eps_start - self.eps_end) * np.exp(
-            -1.0 * self.step / self.eps_decay
-        )
-
     def act(self, observation):
-        if np.random.rand() < self.epsilon():
-            self.step += 1
-            return self.action_correspondance[
-                np.argmax(self.policy(observation).detach().cpu().numpy())
-            ]
         self.step += 1
+        if np.random.rand() < 0.95: # ?
+            smth = self.policy(observation).detach().cpu().numpy()
+            # print(f'step: {self.step}. smth: {smth}')
+            return self.action_correspondance[
+                np.argmax(smth)
+            ]
+        
         return self.action_correspondance[
             np.random.randint(0, len(self.action_correspondance))
         ]
@@ -65,4 +62,5 @@ if __name__ == "__main__":
     agent = EpsilonGreedyDQN(input_size, device)
 
     for step in range(10):
-        print(agent.epsilon())
+        print('wrong file')
+        # print(agent.epsilon())
