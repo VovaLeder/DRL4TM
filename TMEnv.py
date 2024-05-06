@@ -134,7 +134,7 @@ class TMEnv(Env):
     
     @property
     def state(self):
-        return self.saved_state
+        return self.interface.client.sim_state
 
     @property
     def observation(self):
@@ -142,7 +142,7 @@ class TMEnv(Env):
 
     @property
     def reward(self):
-        cur_state = self.state
+        cur_state = self.observation
         if (LEVEL == 0):
             reward = 0
 
@@ -203,17 +203,17 @@ class TMEnv(Env):
             # print(f"speed: {speed}")
             # print(f"state: {cur_state}")
             if (speed > 0.5):
-                reward += speed
+                reward += speed / 2
             elif (speed > 0.3):
-                reward += speed / 1.1 
+                reward += speed / 2.2 
             elif (speed > 0.2):
-                reward += speed / 1.2
+                reward += speed / 3.3
             elif (speed > 0.1):
-                reward += speed / 1.3
+                reward += speed / 4.4
             elif (speed > -0.05):
-                reward += speed / 1.5
+                reward += speed / 5.5
             else:
-                reward += speed * 5
+                reward += speed
             
             if (self.previous_distance_to_curve != 0):
                 if (self.previous_curve_direction == cur_state[5]):
@@ -229,7 +229,7 @@ class TMEnv(Env):
 
             bad_angle_c = 0.4 - abs(cur_state[3])
             if (bad_angle_c <= 0):
-                reward += bad_angle_c * 5
+                reward += bad_angle_c * 20
 
             # if (self.last_action[0]):
             #     reward += 1
@@ -241,10 +241,10 @@ class TMEnv(Env):
             #     reward -= 1
 
             start_fin_reward = 0
-            if (cur_state[4] > 0.855):
-                start_fin_reward -= 70
-            if (cur_state[4] < 0.1):
+            if (cur_state[5] == 0):
                 start_fin_reward += 100
+            elif (self.state.dyna.current_state.position[1] < 40):
+                start_fin_reward -= 70
 
             reward += start_fin_reward
 

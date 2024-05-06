@@ -33,6 +33,7 @@ class SimState0(SimState):
     
     def __str__(self):
         return f"""
+        SimState0
         lin_speed: {self.linear_speed}
         ang_speed: {self.angular_speed}
         dist_to_center: {self.distance_to_centerline}
@@ -57,6 +58,7 @@ class SimState1(SimState):
     
     def __str__(self):
         return f"""
+        SimState1
         lin_speed: {self.linear_speed}
         ang_speed: {self.angular_speed}
         dist_to_center: {self.distance_to_centerline}

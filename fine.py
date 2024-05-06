@@ -1,4 +1,3 @@
-import gymnasium as gym
 import math
 import random
 from itertools import count
@@ -15,25 +14,17 @@ from TMEnv import TMEnv
 
 episode_durations = []
 
-# env = gym.make("CartPole-v1")
 env = TMEnv()
 
 # if GPU is to be used
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     
-
 # Training utils
 
 # Get number of actions from
 n_actions = 16
-# action_correspondance = {
-#     i + 2 * j + 4 * k + 8 * l: [i, j, k, l]
-#     for i in range(2)
-#     for j in range(2)
-#     for k in range(2)
-#     for l in range(2)
-# }
+
 # Get the number of state observations
 state = env.reset()
 n_observations = len(state)
