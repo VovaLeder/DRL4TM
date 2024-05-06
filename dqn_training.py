@@ -96,7 +96,7 @@ class DQN_trainer:
 
 if __name__ == "__main__":
     save_path = path.join(base_path, str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', ''))
-    load_path = path.join(base_path, '20240417002606775026')
+    load_path = path.join(base_path, '1_straght')
     # load_path = None
     trainer = DQN_trainer(N_epochs=3000, save_path=save_path, load_path=None)
     trainer.train()

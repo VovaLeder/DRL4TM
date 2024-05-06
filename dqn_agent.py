@@ -6,10 +6,12 @@ from agent import Agent
 
 
 class DQN(nn.Module):
-    def __init__(self, input_size, output_size, mid_size=32, p=0.5) -> None:
+    def __init__(self, input_size, output_size, mid_size=48, p=0.2) -> None:
         super().__init__()
         self.fc1 = nn.Linear(input_size, mid_size)
-        self.fc2 = nn.Linear(mid_size, output_size)
+        self.fc2 = nn.Linear(mid_size, mid_size * 2)
+        self.fc3 = nn.Linear(mid_size * 2, mid_size)
+        self.fc4 = nn.Linear(mid_size, output_size)
         self.dropout = nn.Dropout(p=p)
 
     def forward(self, observation):
@@ -18,16 +20,19 @@ class DQN(nn.Module):
         x = nn.ReLU()(x)
         x = self.dropout(x)
         x = self.fc2(x)
+        x = nn.ReLU()(x)
+        x = self.dropout(x)
+        x = self.fc3(x)
+        x = nn.ReLU()(x)
+        x = self.dropout(x)
+        x = self.fc4(x)
         return x
 
 
 class EpsilonGreedyDQN(Agent):
-    def __init__(self, input_size, device, eps=1e-3) -> None:
+    def __init__(self, input_size, device) -> None:
         super().__init__()
         self.device = device
-        self.eps_start = 0.9
-        self.eps_end = eps
-        self.eps_decay = 200
         self.action_correspondance = {
             i + 2 * j + 4 * k + 8 * l: [i, j, k, l]
             for i in range(2)
@@ -56,11 +61,4 @@ class EpsilonGreedyDQN(Agent):
 
 
 if __name__ == "__main__":
-    input_size = 6
-    device = "cuda"
-    time.sleep(0.5)
-    agent = EpsilonGreedyDQN(input_size, device)
-
-    for step in range(10):
-        print('wrong file')
-        # print(agent.epsilon())
+    print('wrong file')
