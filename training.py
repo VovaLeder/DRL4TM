@@ -1,4 +1,6 @@
+import datetime
 import math
+from os import path
 import random
 from itertools import count
 
@@ -11,6 +13,7 @@ from replay_memory import ReplayMemory, Transition
 from hyperparameters import *
 from TMEnv import TMEnv
 
+base_path = path.join(path.curdir, 'model_dicts')
 
 episode_durations = []
 
@@ -37,7 +40,7 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-steps_done = 0
+steps_done = 5000
 
 
 def select_action(state):
@@ -106,46 +109,105 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
-if torch.cuda.is_available():
-    num_episodes = 600
-else:
-    num_episodes = 50
+def train(save_path, load_path=None):
 
-for i_episode in range(num_episodes):
-    # print(f'i_episode: {i_episode}')
-    # Initialize the environment and get its state
-    state = env.reset()
-    state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
-    for t in count():
-        action = select_action(state)
-        observation, reward, terminated, info = env.step(action)
-        reward = torch.tensor([reward], device=device)
-        done = terminated
+    if (load_path != None):
+        checkpoint = torch.load(load_path)
+        target_net.load_state_dict(checkpoint['target_net_state_dict'])
+        policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        memory._full_set(checkpoint['memory'])
+        steps_done = checkpoint['steps_done']
 
-        if terminated:
-            next_state = None
-        else:
-            next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+        target_net.train()
+        policy_net.train()
 
-        # Store the transition in memory
-        memory.push(state, action, next_state, reward)
+    if torch.cuda.is_available():
+        num_episodes = 600
+    else:
+        num_episodes = 50
 
-        # Move to the next state
-        state = next_state
+    for i_episode in range(num_episodes):
+        # print(f'i_episode: {i_episode}')
+        # Initialize the environment and get its state
+        state = env.reset()
+        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+        for t in count():
+            action = select_action(state)
+            observation, reward, terminated, info = env.step(action)
+            reward = torch.tensor([reward], device=device)
+            done = terminated
 
-        # Perform one step of the optimization (on the policy network)
-        optimize_model()
+            if terminated:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
 
-        # Soft update of the target network's weights
-        # θ′ ← τ θ + (1 −τ )θ′
-        target_net_state_dict = target_net.state_dict()
-        policy_net_state_dict = policy_net.state_dict()
-        for key in policy_net_state_dict:
-            target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
-        target_net.load_state_dict(target_net_state_dict)
+            # Store the transition in memory
+            memory.push(state, action, next_state, reward)
 
-        if done:
-            episode_durations.append(t + 1)
-            break
+            # Move to the next state
+            state = next_state
 
-print('Complete')
+            # Perform one step of the optimization (on the policy network)
+            optimize_model()
+
+            # Soft update of the target network's weights
+            # θ′ ← τ θ + (1 −τ )θ′
+            target_net_state_dict = target_net.state_dict()
+            policy_net_state_dict = policy_net.state_dict()
+            for key in policy_net_state_dict:
+                target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+            target_net.load_state_dict(target_net_state_dict)
+
+            if done:
+                episode_durations.append(t + 1)
+                break
+
+        torch.save({
+            'policy_net_state_dict': policy_net.state_dict(),
+            'target_net_state_dict': target_net.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'memory': memory._full_get(),
+            'steps_done': steps_done
+        }, save_path)
+
+def eval(load_path):
+    checkpoint = torch.load(load_path)
+    target_net.load_state_dict(checkpoint['target_net_state_dict'])
+    policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
+    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    target_net.eval()
+    policy_net.eval()
+
+
+    for i_episode in range(100):
+        # print(f'i_episode: {i_episode}')
+        # Initialize the environment and get its state
+        state = env.reset()
+        state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
+        for t in count():
+            action = select_action(state)
+            observation, reward, terminated, info = env.step(action)
+            reward = torch.tensor([reward], device=device)
+            done = terminated
+
+            if terminated:
+                next_state = None
+            else:
+                next_state = torch.tensor(observation, dtype=torch.float32, device=device).unsqueeze(0)
+
+            # Move to the next state
+            state = next_state
+
+            if done:
+                episode_durations.append(t + 1)
+                break
+
+if __name__ == '__main__':
+    save_path = path.join(base_path, str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', '') + '.tar')
+    load_path = path.join(base_path, '20240510124210553633.tar')
+
+    # train(save_path, load_path=load_path)
+    eval(load_path=load_path)
