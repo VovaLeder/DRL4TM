@@ -1,5 +1,6 @@
 from tminterface.client import Client
 from tminterface.interface import TMInterface, SimStateData
+from tminterface.structs import CheckpointData
 from time import sleep
 from SimStates import SimState0, SimState1
 from constants import LEVEL
@@ -31,17 +32,23 @@ class SimStateClient(Client):
         super().__init__()
         self.iface: TMInterface = None
         self.sim_state: SimStateData = None
+        self.cp_data: CheckpointData = None
         self.actions = None
         self.should_reset = False
 
     def on_run_step(self, iface: TMInterface, _time: int):
         self.iface = iface
         self.sim_state = iface.get_simulation_state()
+        self.cp_data = iface.get_checkpoint_state()
         if self.should_reset:
             self.should_reset = False
             self.iface.respawn()
         if self.actions != None:
             self.iface.set_input_state(**self.actions)
+
+    # def on_checkpoint_count_changed(self, iface: TMInterface, current: int, target: int):
+    #     if (current == target):
+    #         self.should_reset = True
             
 
 class SimStateInterface():

@@ -98,6 +98,26 @@ class TMEnv(Env):
         info = {}
         time.sleep(self.command_frequency)
         return self.observation, cur_reward, done, info
+    
+    def _manual_step(self):
+
+        self.saved_state = np.array(self.interface.get_state())
+
+
+        done = False
+        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 500):
+            done = True
+            if (self.total_reward > 200):
+                print("yay!")
+            elif (self.total_reward < -100):
+                print("meh :(")
+
+        cur_reward = self.reward
+        self.total_reward += cur_reward
+        self.n_steps += 1
+        info = {}
+        time.sleep(self.command_frequency)
+        return self.observation, cur_reward, done, info
 
     def render(self):
         pass
@@ -242,11 +262,13 @@ class TMEnv(Env):
 
             start_fin_reward = 0
             if (cur_state[5] == 0):
-                start_fin_reward += 100
+                start_fin_reward += 1000
             elif (self.state.dyna.current_state.position[1] < 40):
                 start_fin_reward -= 70
 
             reward += start_fin_reward
+
+        # if (self.interface.interface.client.onc)
 
         # print(f'reward: {reward}')
         return reward

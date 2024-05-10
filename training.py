@@ -40,16 +40,16 @@ optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
 memory = ReplayMemory(10000)
 
 
-steps_done = 5000
+steps_done = 0
 
 
-def select_action(state):
+def select_action(state, eval_mode = True):
     global steps_done
     sample = random.random()
     eps_threshold = EPS_END + (EPS_START - EPS_END) * \
         math.exp(-1. * steps_done / EPS_DECAY)
     steps_done += 1
-    if sample > eps_threshold:
+    if ((sample > eps_threshold) or eval_mode):
         with torch.no_grad():
             # t.max(1) will return the largest column value of each row.
             # second column on max result is index of where max element was
@@ -109,7 +109,8 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
-def train(save_path, load_path=None):
+def train(save_path, load_path=None, par_steps_done=None):
+    global target_net, policy_net, optimizer, steps_done
 
     if (load_path != None):
         checkpoint = torch.load(load_path)
@@ -117,7 +118,10 @@ def train(save_path, load_path=None):
         policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         memory._full_set(checkpoint['memory'])
-        steps_done = checkpoint['steps_done']
+        if (par_steps_done == None):
+            steps_done = checkpoint['steps_done']
+        else:
+            steps_done = par_steps_done
 
         target_net.train()
         policy_net.train()
@@ -173,6 +177,8 @@ def train(save_path, load_path=None):
         }, save_path)
 
 def eval(load_path):
+    global target_net, policy_net, optimizer
+
     checkpoint = torch.load(load_path)
     target_net.load_state_dict(checkpoint['target_net_state_dict'])
     policy_net.load_state_dict(checkpoint['policy_net_state_dict'])
