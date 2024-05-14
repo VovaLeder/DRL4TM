@@ -45,6 +45,7 @@ class TMEnv(Env):
         
         self.last_action = None
         self.previous_distance_to_curve = 0
+        self.previous_speed = 0
         self.previous_curve_direction = 0
 
     def action_to_command(self, action):
@@ -85,9 +86,9 @@ class TMEnv(Env):
         self.action_to_command(action)
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 500):
+        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 1500):
             done = True
-            if (self.total_reward > 200):
+            if (self.total_reward > 1000):
                 print("yay!")
             elif (self.total_reward < -100):
                 print("meh :(")
@@ -105,9 +106,9 @@ class TMEnv(Env):
 
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 500):
+        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 1500):
             done = True
-            if (self.total_reward > 200):
+            if (self.total_reward > 1000):
                 print("yay!")
             elif (self.total_reward < -100):
                 print("meh :(")
@@ -145,6 +146,7 @@ class TMEnv(Env):
         self.time = 0
         self.last_action = None
         self.previous_distance_to_curve = 0
+        self.previous_speed = 0
         self.previous_curve_direction = 0
         self._restart_race()
         # print("reset done\n")
@@ -192,21 +194,13 @@ class TMEnv(Env):
                 else:
                     reward += 5
 
+            self.previous_speed = speed
             self.previous_distance_to_curve = cur_state[4]
             self.previous_curve_direction = cur_state[5]
 
             bad_angle_c = 0.4 - abs(cur_state[3])
             if (bad_angle_c <= 0):
                 reward += bad_angle_c * 5
-
-            # if (self.last_action[0]):
-            #     reward += 5
-            # if (self.last_action[1]):
-            #     reward -= 2
-            # if (self.last_action[2]):
-            #     reward -= 2
-            # if (self.last_action[3]):
-            #     reward -= 2
 
             # reward += (0.85 - cur_state[4]) * 15
             if (cur_state[4] > 0.855):
@@ -223,48 +217,42 @@ class TMEnv(Env):
             # print(f"speed: {speed}")
             # print(f"state: {cur_state}")
             if (speed > 0.5):
-                reward += speed / 2
+                reward += speed
             elif (speed > 0.3):
-                reward += speed / 2.2 
+                reward += speed / 1.1 
             elif (speed > 0.2):
-                reward += speed / 3.3
+                reward += speed / 2.2
             elif (speed > 0.1):
-                reward += speed / 4.4
-            elif (speed > -0.05):
-                reward += speed / 5.5
+                reward += speed / 3.3
+            elif (speed > -0.1):
+                reward += (-abs(speed)) / 3.3
             else:
                 reward += speed
             
             if (self.previous_distance_to_curve != 0):
                 if (self.previous_curve_direction == cur_state[5]):
                     if (self.previous_distance_to_curve - cur_state[4] > 0):
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 50
+                        reward += (self.previous_distance_to_curve - cur_state[4]) * 100
                     else:
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 250
+                        reward += (self.previous_distance_to_curve - cur_state[4]) * 350
                 else:
                     reward += 1
 
+            reward += (speed - self.previous_speed - 0.1) * 5
+
+            self.previous_speed = speed
             self.previous_distance_to_curve = cur_state[4]
             self.previous_curve_direction = cur_state[5]
 
-            bad_angle_c = 0.4 - abs(cur_state[3])
+            bad_angle_c = 0.37 - abs(cur_state[3])
             if (bad_angle_c <= 0):
-                reward += bad_angle_c * 20
-
-            # if (self.last_action[0]):
-            #     reward += 1
-            # if (self.last_action[1]):
-            #     reward -= 5
-            # if (self.last_action[2]):
-            #     reward -= 1
-            # if (self.last_action[3]):
-            #     reward -= 1
+                reward += bad_angle_c * 30
 
             start_fin_reward = 0
             if (cur_state[5] == 0):
                 start_fin_reward += 1000
             elif (self.state.dyna.current_state.position[1] < 40):
-                start_fin_reward -= 70
+                start_fin_reward -= 100
 
             reward += start_fin_reward
 

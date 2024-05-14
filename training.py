@@ -1,8 +1,10 @@
 import datetime
 import math
 from os import path
+import os
 import random
 from itertools import count
+import time
 
 import torch
 import torch.nn as nn
@@ -12,6 +14,9 @@ from dqn import DQN
 from replay_memory import ReplayMemory, Transition
 from hyperparameters import *
 from TMEnv import TMEnv
+
+def get_str_time():
+    return str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', '')
 
 base_path = path.join(path.curdir, 'model_dicts')
 
@@ -112,6 +117,7 @@ def optimize_model():
 def train(save_path, load_path=None, par_steps_done=None):
     global target_net, policy_net, optimizer, steps_done
 
+    steps_done = 0
     if (load_path != None):
         checkpoint = torch.load(load_path)
         target_net.load_state_dict(checkpoint['target_net_state_dict'])
@@ -123,8 +129,8 @@ def train(save_path, load_path=None, par_steps_done=None):
         else:
             steps_done = par_steps_done
 
-        target_net.train()
-        policy_net.train()
+    target_net.train()
+    policy_net.train()
 
     if torch.cuda.is_available():
         num_episodes = 600
@@ -134,10 +140,23 @@ def train(save_path, load_path=None, par_steps_done=None):
     for i_episode in range(num_episodes):
         # print(f'i_episode: {i_episode}')
         # Initialize the environment and get its state
+
+        if (i_episode % 5 == 0):
+            state = env.reset()
+            os.makedirs(save_path, exist_ok=True)
+            torch.save({
+                'policy_net_state_dict': policy_net.state_dict(),
+                'target_net_state_dict': target_net.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'memory': memory._full_get(),
+                'steps_done': steps_done
+            }, path.join(save_path, get_str_time() + '.tar'))
+            time.sleep(2)
+        
         state = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         for t in count():
-            action = select_action(state)
+            action = select_action(state, eval_mode=False)
             observation, reward, terminated, info = env.step(action)
             reward = torch.tensor([reward], device=device)
             done = terminated
@@ -167,14 +186,6 @@ def train(save_path, load_path=None, par_steps_done=None):
             if done:
                 episode_durations.append(t + 1)
                 break
-
-        torch.save({
-            'policy_net_state_dict': policy_net.state_dict(),
-            'target_net_state_dict': target_net.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'memory': memory._full_get(),
-            'steps_done': steps_done
-        }, save_path)
 
 def eval(load_path):
     global target_net, policy_net, optimizer
@@ -212,8 +223,9 @@ def eval(load_path):
                 break
 
 if __name__ == '__main__':
-    save_path = path.join(base_path, str(datetime.datetime.now()).replace('.', '').replace('-', '').replace(':', '').replace(' ', '') + '.tar')
-    load_path = path.join(base_path, '20240510124210553633.tar')
+    save_path = path.join(base_path, get_str_time())
+    load_path = path.join(base_path, '20240515001147248622' ,'20240515001450288216.tar')
 
-    # train(save_path, load_path=load_path)
-    eval(load_path=load_path)
+    # train(save_path)
+    train(save_path, load_path=load_path)
+    # eval(load_path=load_path)
