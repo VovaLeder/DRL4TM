@@ -226,6 +226,6 @@ if __name__ == '__main__':
     save_path = path.join(base_path, get_str_time())
     load_path = path.join(base_path, '20240515001147248622' ,'20240515001450288216.tar')
 
-    # train(save_path)
-    train(save_path, load_path=load_path)
+    train(save_path)
+    # train(save_path, load_path=load_path)
     # eval(load_path=load_path)

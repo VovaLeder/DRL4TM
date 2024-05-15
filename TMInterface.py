@@ -2,6 +2,7 @@ from tminterface.client import Client
 from tminterface.interface import TMInterface, SimStateData
 from tminterface.structs import CheckpointData
 from time import sleep
+from SimState2 import SimState2
 from SimStates import SimState0, SimState1
 from constants import LEVEL
 
@@ -45,10 +46,6 @@ class SimStateClient(Client):
             self.iface.respawn()
         if self.actions != None:
             self.iface.set_input_state(**self.actions)
-
-    # def on_checkpoint_count_changed(self, iface: TMInterface, current: int, target: int):
-    #     if (current == target):
-    #         self.should_reset = True
             
 
 class SimStateInterface():
@@ -62,6 +59,8 @@ class SimStateInterface():
             self.state = SimState0()
         elif (LEVEL == 1):
             self.state = SimState1()
+        elif (LEVEL == 2):
+            self.state = SimState2()
         print('SimStateInterface Initiated')
 
     def get_state(self):
@@ -72,10 +71,15 @@ class SimStateInterface():
         pos = self.client.sim_state.dyna.current_state.position
         rot = self.client.sim_state.dyna.current_state.rotation 
         linear_speed = self.client.sim_state.dyna.current_state.linear_speed
+        actual_linear_speed = linear_speed[0] * rot[0, 2] + linear_speed[2] * rot[0, 0]
+        actual_angular_speed = - linear_speed[0] * rot[0, 0] + linear_speed[2] * rot[0, 2]
 
-        self.state.get_info_from_center_line(pos, rot)
-        self.state.linear_speed = linear_speed[0] * rot[0, 2] + linear_speed[2] * rot[0, 0]
-        self.state.angular_speed = - linear_speed[0] * rot[0, 0] + linear_speed[2] * rot[0, 2]
+        if (LEVEL == 2):
+            self.state.get_info(pos, rot, actual_linear_speed, actual_angular_speed)
+        else:
+            self.state.get_info_from_center_line(pos, rot)
+            self.state.linear_speed = actual_linear_speed
+            self.state.angular_speed = actual_angular_speed
 
         self.state.normalize()
 
@@ -88,11 +92,13 @@ class SimStateInterface():
 if __name__ == '__main__':
     interface = SimStateInterface()
     sleep(0.5)
-    interface.reset()
+    # interface.reset()
     while True:
-        sleep(0.1)
+        sleep(1)
         interface.step()
         print(interface.state)
+        
+        # print(interface.client.sim_state.dyna.current_state.position)
 
 
 

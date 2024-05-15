@@ -9,7 +9,7 @@ from constants import LEVEL
 
 # gas, break, steer
 ACTION_SPACE = MultiBinary((4,))
-OBSERVATION_SPACE = Box(-1, 1, (6,))
+OBSERVATION_SPACE = Box(-1, 1, (6,)) if LEVEL != 2 else Box(-1, 1, (10,))
 
 GAME_SPEED = 1 # default = 1
 COMMAND_SPEED = 0.05
@@ -47,6 +47,7 @@ class TMEnv(Env):
         self.previous_distance_to_curve = 0
         self.previous_speed = 0
         self.previous_curve_direction = 0
+        self.saved_cur = 0
 
     def action_to_command(self, action):
         gas, braking, left, right = action
@@ -165,95 +166,70 @@ class TMEnv(Env):
     @property
     def reward(self):
         cur_state = self.observation
-        if (LEVEL == 0):
-            reward = 0
 
-            speed = cur_state[0]
+        reward = 0
 
-            # print(f"speed: {speed}")
-            # print(f"state: {cur_state}")
-            if (speed > 0.5):
-                reward += speed
-            elif (speed > 0.3):
-                reward += speed / 1.1 
-            elif (speed > 0.2):
-                reward += speed / 1.2
-            elif (speed > 0.1):
-                reward += speed / 1.3
-            elif (speed > -0.05):
-                reward += speed / 1.5
-            else:
-                reward += speed * 5
-            
-            if (self.previous_distance_to_curve != 0):
-                if (self.previous_curve_direction == cur_state[5]):
-                    if (self.previous_distance_to_curve - cur_state[4] > 0):
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 50
-                    else:
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 250
+        speed = cur_state[0]
+
+        # print(f"speed: {speed}")
+        # print(f"state: {cur_state}")
+        if (speed > 0.5):
+            reward += speed
+        elif (speed > 0.3):
+            reward += speed / 1.1 
+        elif (speed > 0.2):
+            reward += speed / 2.2
+        elif (speed > 0.1):
+            reward += speed / 3.3
+        elif (speed > -0.1):
+            reward += (-abs(speed)) / 3.3
+        else:
+            reward += speed
+
+        if (self.previous_distance_to_curve != 0):
+            if ((LEVEL != 2 and self.previous_curve_direction == cur_state[5])
+                or (LEVEL == 2 and self.saved_cur == self.interface.state.cur)):
+                if (self.previous_distance_to_curve - cur_state[4] > 0):
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 100
                 else:
-                    reward += 5
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 350
+            else:
+                reward += 10
 
-            self.previous_speed = speed
-            self.previous_distance_to_curve = cur_state[4]
-            self.previous_curve_direction = cur_state[5]
+        
+        reward += (speed - self.previous_speed - 0.1) * 5
 
-            bad_angle_c = 0.4 - abs(cur_state[3])
-            if (bad_angle_c <= 0):
-                reward += bad_angle_c * 5
+        if (LEVEL == 2):
+            self.saved_cur = self.interface.state.cur
+        self.previous_speed = speed
+        self.previous_distance_to_curve = cur_state[4]
+        self.previous_curve_direction = cur_state[5]
 
-            # reward += (0.85 - cur_state[4]) * 15
+        bad_angle_c = 0.55 - abs(cur_state[3])
+        if (bad_angle_c <= 0):
+            reward += bad_angle_c * 30
+
+        if (LEVEL == 0):
             if (cur_state[4] > 0.855):
                 reward -= 70
             if (cur_state[4] < 0.1):
                 reward += 400
 
-            
         elif (LEVEL == 1):
-            reward = 0
-
-            speed = cur_state[0]
-
-            # print(f"speed: {speed}")
-            # print(f"state: {cur_state}")
-            if (speed > 0.5):
-                reward += speed
-            elif (speed > 0.3):
-                reward += speed / 1.1 
-            elif (speed > 0.2):
-                reward += speed / 2.2
-            elif (speed > 0.1):
-                reward += speed / 3.3
-            elif (speed > -0.1):
-                reward += (-abs(speed)) / 3.3
-            else:
-                reward += speed
-            
-            if (self.previous_distance_to_curve != 0):
-                if (self.previous_curve_direction == cur_state[5]):
-                    if (self.previous_distance_to_curve - cur_state[4] > 0):
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 100
-                    else:
-                        reward += (self.previous_distance_to_curve - cur_state[4]) * 350
-                else:
-                    reward += 1
-
-            reward += (speed - self.previous_speed - 0.1) * 5
-
-            self.previous_speed = speed
-            self.previous_distance_to_curve = cur_state[4]
-            self.previous_curve_direction = cur_state[5]
-
-            bad_angle_c = 0.37 - abs(cur_state[3])
-            if (bad_angle_c <= 0):
-                reward += bad_angle_c * 30
-
             start_fin_reward = 0
             if (cur_state[5] == 0):
                 start_fin_reward += 1000
             elif (self.state.dyna.current_state.position[1] < 40):
                 start_fin_reward -= 100
+            reward += start_fin_reward
 
+
+        elif (LEVEL == 2):
+            start_fin_reward = 0
+            if (cur_state[5] == 0):
+                start_fin_reward += 1000
+            elif (self.state.dyna.current_state.position[1] < 160):
+                start_fin_reward -= 100
             reward += start_fin_reward
 
         # if (self.interface.interface.client.onc)

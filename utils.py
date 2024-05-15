@@ -68,7 +68,7 @@ def normalize_info(info):
     return (result.linear_speed, result.angular_speed, result.distance_to_centerline, result.angle_to_centerline, result.next_curve_distance, result.next_curve_direction)
 
 if __name__ == '__main__':
-    print('wrong file dumbass')
+    print('wrong file')
 
 # [283.6285400390625 41.373592376708984 533.5134887695312]
 
