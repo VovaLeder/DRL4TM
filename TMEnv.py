@@ -32,7 +32,6 @@ class TMEnv(Env):
         self.interface = SimStateInterface()
         time.sleep(0.15)
         self.interface.interface.set_speed(GAME_SPEED)
-        self.interface.interface.prevent_simulation_finish()
         self.saved_state = np.array(self.interface.get_state())
 
         # self.simthread = ThreadedClient()
@@ -173,15 +172,15 @@ class TMEnv(Env):
 
         # print(f"speed: {speed}")
         # print(f"state: {cur_state}")
-        if (speed > 0.5):
+        if (speed > 0.05):
             reward += speed
-        elif (speed > 0.3):
+        elif (speed > 0.03):
             reward += speed / 1.1 
-        elif (speed > 0.2):
+        elif (speed > 0.02):
             reward += speed / 2.2
-        elif (speed > 0.1):
+        elif (speed > 0.01):
             reward += speed / 3.3
-        elif (speed > -0.1):
+        elif (speed > -0.01):
             reward += (-abs(speed)) / 3.3
         else:
             reward += speed
@@ -190,14 +189,20 @@ class TMEnv(Env):
             if ((LEVEL != 2 and self.previous_curve_direction == cur_state[5])
                 or (LEVEL == 2 and self.saved_cur == self.interface.state.cur)):
                 if (self.previous_distance_to_curve - cur_state[4] > 0):
-                    reward += (self.previous_distance_to_curve - cur_state[4]) * 100
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 200
                 else:
-                    reward += (self.previous_distance_to_curve - cur_state[4]) * 350
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 700
             else:
-                reward += 10
+                if (LEVEL != 2):
+                    reward += 7
+                else:
+                    if self.saved_cur > self.interface.state.cur:
+                        reward -= 25
+                    else:
+                        reward += 7
 
         
-        reward += (speed - self.previous_speed - 0.1) * 5
+        reward += (speed - self.previous_speed - 0.01) * 5
 
         if (LEVEL == 2):
             self.saved_cur = self.interface.state.cur
@@ -205,32 +210,20 @@ class TMEnv(Env):
         self.previous_distance_to_curve = cur_state[4]
         self.previous_curve_direction = cur_state[5]
 
-        bad_angle_c = 0.55 - abs(cur_state[3])
+        bad_angle_c = 0.75 - abs(cur_state[3])
         if (bad_angle_c <= 0):
-            reward += bad_angle_c * 30
+            reward += bad_angle_c * 50
+
+        if (self.interface.client.finished):
+            reward += 1000
 
         if (LEVEL == 0):
             if (cur_state[4] > 0.855):
                 reward -= 70
-            if (cur_state[4] < 0.1):
-                reward += 400
+        elif (LEVEL == 1 or LEVEL == 2):
+            if (self.state.dyna.current_state.position[1] < (40 if LEVEL == 1 else 160)):
+                reward -= 100
 
-        elif (LEVEL == 1):
-            start_fin_reward = 0
-            if (cur_state[5] == 0):
-                start_fin_reward += 1000
-            elif (self.state.dyna.current_state.position[1] < 40):
-                start_fin_reward -= 100
-            reward += start_fin_reward
-
-
-        elif (LEVEL == 2):
-            start_fin_reward = 0
-            if (cur_state[5] == 0):
-                start_fin_reward += 1000
-            elif (self.state.dyna.current_state.position[1] < 160):
-                start_fin_reward -= 100
-            reward += start_fin_reward
 
         # if (self.interface.interface.client.onc)
 

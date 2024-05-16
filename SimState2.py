@@ -30,7 +30,7 @@ TURNS = [
     [17, 20, 16, 1], # r
     [17, 20, 17, -1], # l
     [19, 20, 17, -1], # l
-    [19, 20, 13, 0],
+    [19, 20, 12, 0],
 ]
 
     
@@ -77,16 +77,17 @@ class SimState2():
                     if (pos[2] >= turn[2] * 32 and pos[2] <= (turn[2] + 1) * 32 and pos[0] >= next_turn[0] * 32 and pos[0] <= (turn[0] + 1) * 32):
                         prev_turn_index = turn_index
 
-            if (prev_turn_index != None):
-                break
+        onFinishBlock = False
+        if (pos[2] >= TURNS[-1][2] * 32 and pos[2] <= (TURNS[-1][2] + 1) * 32 and pos[0] >= TURNS[-1][0] * 32 and pos[0] <= (TURNS[-1][0] + 1) * 32):
+            onFinishBlock = True
 
-        if (prev_turn_index == None):
+        if (prev_turn_index == None and not onFinishBlock):
             return
         
         self.cur = prev_turn_index
 
-        turn = TURNS[prev_turn_index]
-        next_turn = TURNS[prev_turn_index + 1]
+        turn = TURNS[prev_turn_index] if not onFinishBlock else TURNS[-2]
+        next_turn = TURNS[prev_turn_index + 1] if not onFinishBlock else TURNS[-1]
         next_turn2 = TURNS[prev_turn_index + 2] if (len(TURNS) - 2 > prev_turn_index) else None
         next_turn3 = TURNS[prev_turn_index + 3] if (len(TURNS) - 3 > prev_turn_index) else None
 
@@ -94,42 +95,40 @@ class SimState2():
         self.next_curve_direction2 = next_turn2[3] if next_turn2 != None else 0
         self.next_curve_direction3 = next_turn3[3] if next_turn3 != None else 0
 
+        self.next_curve_distance = 700
+        self.next_curve_distance2 = 700
+        self.next_curve_distance3 = 700
+
         if (turn[0] == next_turn[0]):
             if (turn[2] < next_turn[2]):
-                self.next_curve_distance = next_turn[2] * 32 + 16 - pos[2]
+                self.next_curve_distance = (next_turn[2] * 32 - pos[2]) if ((not onFinishBlock) and next_turn[3] != 0) else 700
                 self.distance_to_centerline = turn[0] * 32 + 16 - pos[0]
                 self.angle_to_centerline = - atan2(rot[0, 2], rot[0, 0])
             else:
-                self.next_curve_distance = pos[2] - next_turn[2] * 32 - 16
+                self.next_curve_distance = (pos[2] - next_turn[2] * 32 - 32) if ((not onFinishBlock) and next_turn[3] != 0) else 700
                 self.distance_to_centerline = pos[0] - turn[0] * 32 - 16
-                self.angle_to_centerline = atan2(sin(rot[0, 2]), cos(rot[0, 0]))
+                self.angle_to_centerline = - atan2(-rot[0, 2], -rot[0, 0])
         else:
             if (turn[0] < next_turn[0]):
-                self.next_curve_distance = next_turn[0] * 32 + 16 - pos[0]
+                self.next_curve_distance = (next_turn[0] * 32 - pos[0]) if ((not onFinishBlock) and next_turn[3] != 0) else 700
                 self.distance_to_centerline = pos[2] - turn[2] * 32 - 16
                 self.angle_to_centerline = atan2(rot[0, 0], rot[0, 2])
             else:
-                self.next_curve_distance = pos[0] - next_turn[0] * 32 - 16
+                self.next_curve_distance = (pos[0] - next_turn[0] * 32 - 32) if ((not onFinishBlock) and next_turn[3] != 0) else 700
                 self.distance_to_centerline = turn[2] * 32 + 16 - pos[2]
-                self.angle_to_centerline = - atan2(sin(rot[0, 0]), cos(rot[0, 2]))
-
-
-
-        self.next_curve_distance2 = 0
-        self.next_curve_distance3 = 0
+                self.angle_to_centerline = atan2(-rot[0, 0], -rot[0, 2])
 
         if (next_turn2 != None):
             if (next_turn[0] == next_turn2[0]):
-                self.next_curve_distance2 = (abs(next_turn2[2] - next_turn[2]) - 0.5) * 32
+                self.next_curve_distance2 = ((abs(next_turn2[2] - next_turn[2]) - 0.5) * 32) if next_turn2[3] != 0 else 700
             else:
-                self.next_curve_distance2 = (abs(next_turn2[0] - next_turn[0]) - 0.5) * 32
+                self.next_curve_distance2 = (abs(next_turn2[0] - next_turn[0]) - 0.5) * 32 if next_turn2[3] != 0 else 700
 
             if (next_turn3 != None):
                 if (next_turn2[0] == next_turn3[0]):
-                    self.next_curve_distance3 = (abs(next_turn3[2] - next_turn2[2]) - 0.5) * 32
+                    self.next_curve_distance3 = (abs(next_turn3[2] - next_turn2[2]) - 0.5) * 32 if next_turn3[3] != 0 else 700
                 else:
-                    self.next_curve_distance3 = (abs(next_turn3[0] - next_turn2[0]) - 0.5) * 32
-
+                    self.next_curve_distance3 = (abs(next_turn3[0] - next_turn2[0]) - 0.5) * 32 if next_turn3[3] != 0 else 700
 
 
 

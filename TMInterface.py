@@ -35,6 +35,7 @@ class SimStateClient(Client):
         self.sim_state: SimStateData = None
         self.cp_data: CheckpointData = None
         self.actions = None
+        self.finished = True
         self.should_reset = False
 
     def on_run_step(self, iface: TMInterface, _time: int):
@@ -43,9 +44,16 @@ class SimStateClient(Client):
         self.cp_data = iface.get_checkpoint_state()
         if self.should_reset:
             self.should_reset = False
+            self.finished = False
             self.iface.respawn()
         if self.actions != None:
             self.iface.set_input_state(**self.actions)
+
+    def on_checkpoint_count_changed(self, iface, current: int, target: int):
+        self.iface.prevent_simulation_finish()
+        if (current == target):
+            self.finished = True
+        return super().on_checkpoint_count_changed(iface, current, target)
             
 
 class SimStateInterface():

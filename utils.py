@@ -59,11 +59,11 @@ def get_info_from_center_line_1(car_pos, car_rot):
 
 def normalize_info(info):
     result = info
-    result.linear_speed = info.linear_speed / (300 if LEVEL == 0 else 70)
+    result.linear_speed = info.linear_speed / 840
     result.angular_speed = info.angular_speed / 30
     result.distance_to_centerline = info.distance_to_centerline / 14
     result.angle_to_centerline = info.angle_to_centerline / pi
-    result.next_curve_distance = info.next_curve_distance / ((END_0 - START_0 + 65) if LEVEL == 0 else pi)
+    result.next_curve_distance = info.next_curve_distance / (700 if LEVEL == 0 else pi)
     result.next_curve_direction = info.next_curve_direction
     return (result.linear_speed, result.angular_speed, result.distance_to_centerline, result.angle_to_centerline, result.next_curve_distance, result.next_curve_direction)
 
