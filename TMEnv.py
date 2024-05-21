@@ -37,11 +37,11 @@ class TMEnv(Env):
         # self.simthread = ThreadedClient()
         self.total_reward = 0.0
         self.n_steps = 0
-        self.max_steps = 500 / GAME_SPEED
+        self.max_steps = (5000 / GAME_SPEED) if LEVEL == 2 else (500 / GAME_SPEED)
         self.command_frequency = 0.05 / GAME_SPEED
 
         # PrevStepValues
-        
+        self.added_steps = 0
         self.last_action = None
         self.previous_distance_to_curve = 0
         self.previous_speed = 0
@@ -86,11 +86,11 @@ class TMEnv(Env):
         self.action_to_command(action)
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 1500):
+        if (self.n_steps >= self.max_steps or self.total_reward < -10 or self.total_reward > 1500):
             done = True
             if (self.total_reward > 1000):
                 print("yay!")
-            elif (self.total_reward < -100):
+            elif (self.total_reward < -10):
                 print("meh :(")
 
         cur_reward = self.reward
@@ -106,11 +106,11 @@ class TMEnv(Env):
 
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -100 or self.total_reward > 1500):
+        if (self.n_steps >= self.max_steps or self.total_reward < -10 or self.total_reward > 300):
             done = True
             if (self.total_reward > 1000):
                 print("yay!")
-            elif (self.total_reward < -100):
+            elif (self.total_reward < -10):
                 print("meh :(")
 
         cur_reward = self.reward
@@ -140,7 +140,7 @@ class TMEnv(Env):
             self.actual_max_distance = self.previous_distance_to_curve
             print(f"{time.strftime('%H:%M:%S', time.localtime())} | actual_max_distance: {self.actual_max_distance}")
 
-
+        self.added_steps = 0
         self.total_reward = 0.0
         self.n_steps = 0
         self.time = 0
@@ -149,6 +149,10 @@ class TMEnv(Env):
         self.previous_speed = 0
         self.previous_curve_direction = 0
         self._restart_race()
+        # time.sleep(0.05)
+        
+        # self.interface.interface.set
+
         # print("reset done\n")
         # time.sleep(1.5 / GAME_SPEED)
 
@@ -169,6 +173,8 @@ class TMEnv(Env):
         reward = 0
 
         speed = cur_state[0]
+        if (LEVEL != 2):
+            speed / 4
 
         # print(f"speed: {speed}")
         # print(f"state: {cur_state}")
@@ -188,44 +194,41 @@ class TMEnv(Env):
         if (self.previous_distance_to_curve != 0):
             if ((LEVEL != 2 and self.previous_curve_direction == cur_state[5])
                 or (LEVEL == 2 and self.saved_cur == self.interface.state.cur)):
-                if (self.previous_distance_to_curve - cur_state[4] > 0):
-                    reward += (self.previous_distance_to_curve - cur_state[4]) * 200
+                if (self.previous_distance_to_curve - cur_state[4] / 400 > 0.006):
+                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 600
                 else:
-                    reward += (self.previous_distance_to_curve - cur_state[4]) * 700
+                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 5000 - 0.15
             else:
                 if (LEVEL != 2):
-                    reward += 7
+                    self.added_steps += 65 / GAME_SPEED
+                    reward += 1
                 else:
                     if self.saved_cur > self.interface.state.cur:
-                        reward -= 25
+                        reward -= 50
                     else:
+                        self.added_steps += 65 / GAME_SPEED
                         reward += 7
 
-        
-        reward += (speed - self.previous_speed - 0.01) * 5
 
         if (LEVEL == 2):
             self.saved_cur = self.interface.state.cur
         self.previous_speed = speed
-        self.previous_distance_to_curve = cur_state[4]
+        self.previous_distance_to_curve = cur_state[4] / 400
         self.previous_curve_direction = cur_state[5]
 
         bad_angle_c = 0.75 - abs(cur_state[3])
         if (bad_angle_c <= 0):
             reward += bad_angle_c * 50
 
-        if (self.interface.client.finished):
-            reward += 1000
+        if (self.interface.client.finished and self.n_steps > 5):
+            reward += 200
 
         if (LEVEL == 0):
             if (cur_state[4] > 0.855):
-                reward -= 70
+                reward -= 20
         elif (LEVEL == 1 or LEVEL == 2):
-            if (self.state.dyna.current_state.position[1] < (40 if LEVEL == 1 else 160)):
-                reward -= 100
-
-
-        # if (self.interface.interface.client.onc)
+            if (self.state.dyna.current_state.position[1] < (40 if LEVEL == 1 else 129)):
+                reward -= 20
 
         # print(f'reward: {reward}')
         return reward

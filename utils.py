@@ -59,7 +59,7 @@ def get_info_from_center_line_1(car_pos, car_rot):
 
 def normalize_info(info):
     result = info
-    result.linear_speed = info.linear_speed / 840
+    result.linear_speed = info.linear_speed / 100
     result.angular_speed = info.angular_speed / 30
     result.distance_to_centerline = info.distance_to_centerline / 14
     result.angle_to_centerline = info.angle_to_centerline / pi

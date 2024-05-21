@@ -1,3 +1,4 @@
+import random
 from tminterface.client import Client
 from tminterface.interface import TMInterface, SimStateData
 from tminterface.structs import CheckpointData
@@ -37,6 +38,7 @@ class SimStateClient(Client):
         self.actions = None
         self.finished = True
         self.should_reset = False
+        self.tp_coords = []
 
     def on_run_step(self, iface: TMInterface, _time: int):
         self.iface = iface
@@ -46,6 +48,9 @@ class SimStateClient(Client):
             self.should_reset = False
             self.finished = False
             self.iface.respawn()
+            if (LEVEL == 2):
+                coord = random.choice(self.tp_coords)
+                self.iface.execute_command(f"tp {coord[0]} {coord[1]} {coord[2]}")
         if self.actions != None:
             self.iface.set_input_state(**self.actions)
 
@@ -58,6 +63,7 @@ class SimStateClient(Client):
 
 class SimStateInterface():
     def __init__(self):
+        
         self.client = SimStateClient()
         self.interface = TMInterface()
         
@@ -69,6 +75,8 @@ class SimStateInterface():
             self.state = SimState1()
         elif (LEVEL == 2):
             self.state = SimState2()
+            self.client.tp_coords = self.state.get_tp_coords()
+
         print('SimStateInterface Initiated')
 
     def get_state(self):

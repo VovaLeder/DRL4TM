@@ -1,6 +1,5 @@
 from math import atan2, cos, pi, sin
 
-
 TURNS = [
     # || 484.4 - 496 - 507.6 ||
     # 436.8 468.8 500.8
@@ -33,9 +32,59 @@ TURNS = [
     [19, 20, 12, 0],
 ]
 
+TURNS_BIG = [
+    [17, 16, 15, 0],
+    [17, 16, 19, 1],
+    [16, 16, 19, 1],
+    [16, 16, 17, -1],
+    [15, 16, 17, -1],
+    [15, 16, 20, -1],
+    [18, 16, 20, -1],
+    [18, 16, 17, 1],
+    [22, 16, 17, 1],
+    [22, 16, 21, 1],
+    [21, 16, 21, 1],
+    [21, 16, 18, -1],
+    [19, 16, 18, -1],
+    [19, 16, 19, -1],
+    [20, 16, 19, 1],
+    [20, 16, 20, 1],
+    [19, 16, 20, -1],
+    [19, 16, 21, -1],
+    [20, 16, 21, 1],
+    [20, 16, 22, 1],
+    [18, 16, 22, 1],
+    [18, 16, 21, -1],
+    [8, 16, 21,  1], 
+    [8, 16, 17,  1],
+    [11, 16, 17, 1],
+    [11, 16, 20, -1],
+    [13, 16, 20, -1],
+    [13, 16, 13, 1],
+    [22, 16, 13, -1],
+    [22, 16, 11, -1],
+    [21, 16, 11, -1],
+    [21, 16, 12, 1],
+    [20, 16, 12, 1],
+    [20, 16, 10, 1],
+    [23, 16, 10, 1],
+    [23, 16, 16, 1],
+    [18, 16, 16, 1],
+    [18, 16, 15, 1],
+    [22, 16, 15, -1],
+    [22, 16, 14, -1],
+    [14, 16, 14, -1],
+    [14, 16, 16, -1],
+    [15, 16, 16, -1],
+    [15, 16, 15, 0],
+]
+
+LevelType = 1 # 0 for small, 1 for big
     
 class SimState2():
     def __init__(self) -> None:
+        self.TURNS = TURNS if LevelType == 0 else TURNS_BIG
+        
         self.linear_speed = 0
         self.angular_speed = 0
         self.distance_to_centerline = 0
@@ -52,14 +101,23 @@ class SimState2():
 
         self.cur = 0
 
+    def get_tp_coords(self):
+        res = []
+        cur_rot = 0
+        for turn_index, turn in enumerate(self.TURNS):
+            cur_rot += turn[3]
+            if (cur_rot % 4 == 0):
+                res.append([turn[0] * 32 + 16, 129 if LevelType == 1 else 159, turn[2] * 32 + 16])
+        return res
+
     def get_info(self, pos, rot, linear_speed, angular_speed):
         self.linear_speed = linear_speed
         self.angular_speed = angular_speed
 
         prev_turn_index = None
 
-        for turn_index, turn in enumerate(TURNS):
-            next_turn = TURNS[turn_index + 1] if len(TURNS) - 1 > turn_index else None
+        for turn_index, turn in enumerate(self.TURNS):
+            next_turn = self.TURNS[turn_index + 1] if len(self.TURNS) - 1 > turn_index else None
             if (next_turn == None):
                 break
             if (turn[0] == next_turn[0]):
@@ -78,7 +136,7 @@ class SimState2():
                         prev_turn_index = turn_index
 
         onFinishBlock = False
-        if (pos[2] >= TURNS[-1][2] * 32 and pos[2] <= (TURNS[-1][2] + 1) * 32 and pos[0] >= TURNS[-1][0] * 32 and pos[0] <= (TURNS[-1][0] + 1) * 32):
+        if (pos[2] >= self.TURNS[-1][2] * 32 and pos[2] <= (self.TURNS[-1][2] + 1) * 32 and pos[0] >= self.TURNS[-1][0] * 32 and pos[0] <= (self.TURNS[-1][0] + 1) * 32):
             onFinishBlock = True
 
         if (prev_turn_index == None and not onFinishBlock):
@@ -86,10 +144,10 @@ class SimState2():
         
         self.cur = prev_turn_index
 
-        turn = TURNS[prev_turn_index] if not onFinishBlock else TURNS[-2]
-        next_turn = TURNS[prev_turn_index + 1] if not onFinishBlock else TURNS[-1]
-        next_turn2 = TURNS[prev_turn_index + 2] if (len(TURNS) - 2 > prev_turn_index) else None
-        next_turn3 = TURNS[prev_turn_index + 3] if (len(TURNS) - 3 > prev_turn_index) else None
+        turn = self.TURNS[prev_turn_index] if not onFinishBlock else self.TURNS[-2]
+        next_turn = self.TURNS[prev_turn_index + 1] if not onFinishBlock else self.TURNS[-1]
+        next_turn2 = self.TURNS[prev_turn_index + 2] if (len(self.TURNS) - 2 > prev_turn_index) else None
+        next_turn3 = self.TURNS[prev_turn_index + 3] if (len(self.TURNS) - 3 > prev_turn_index) else None
 
         self.next_curve_direction = next_turn[3]
         self.next_curve_direction2 = next_turn2[3] if next_turn2 != None else 0
@@ -133,7 +191,7 @@ class SimState2():
 
 
     def normalize(self):
-        self.linear_speed = self.linear_speed / 840
+        self.linear_speed = self.linear_speed / 420
         self.angular_speed = self.angular_speed / 30
         self.distance_to_centerline = self.distance_to_centerline / 12
         self.angle_to_centerline = self.angle_to_centerline / pi

@@ -37,8 +37,9 @@ n_actions = 16
 state = env.reset()
 n_observations = len(state)
 
-policy_net = DQN(n_observations, n_actions).to(device)
+policy_net = DQN(n_observations, n_actions).to(device) 
 target_net = DQN(n_observations, n_actions).to(device)
+
 target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
@@ -141,7 +142,7 @@ def train(save_path, load_path=None, par_steps_done=None):
         # print(f'i_episode: {i_episode}')
         # Initialize the environment and get its state
 
-        if (i_episode % 5 == 0):
+        if (i_episode % 25 == 0):
             state = env.reset()
             os.makedirs(save_path, exist_ok=True)
             torch.save({
@@ -199,7 +200,7 @@ def eval(load_path):
     policy_net.eval()
 
 
-    for i_episode in range(100):
+    while (True):
         # print(f'i_episode: {i_episode}')
         # Initialize the environment and get its state
         state = env.reset()
@@ -224,8 +225,9 @@ def eval(load_path):
 
 if __name__ == '__main__':
     save_path = path.join(base_path, get_str_time())
-    load_path = path.join(base_path, '20240515001147248622' ,'20240515001450288216.tar')
+    load_path = path.join(base_path, 'm1t3', '20240521070459501451.tar')
 
-    train(save_path)
+    # train(save_path)
     # train(save_path, load_path=load_path)
-    # eval(load_path=load_path)
+    # train(save_path, load_path=load_path, par_steps_done=6500)
+    eval(load_path=load_path)
