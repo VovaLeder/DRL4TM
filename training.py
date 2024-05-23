@@ -133,16 +133,11 @@ def train(save_path, load_path=None, par_steps_done=None):
     target_net.train()
     policy_net.train()
 
-    if torch.cuda.is_available():
-        num_episodes = 600
-    else:
-        num_episodes = 50
-
-    for i_episode in range(num_episodes):
+    for i_episode in count():
         # print(f'i_episode: {i_episode}')
         # Initialize the environment and get its state
 
-        if (i_episode % 25 == 0):
+        if (i_episode % 50 == 0):
             state = env.reset()
             os.makedirs(save_path, exist_ok=True)
             torch.save({
@@ -224,10 +219,10 @@ def eval(load_path):
                 break
 
 if __name__ == '__main__':
-    save_path = path.join(base_path, get_str_time())
+    save_path = path.join(base_path, 'm1t4')
     load_path = path.join(base_path, 'm1t3', '20240521070459501451.tar')
 
-    # train(save_path)
+    train(save_path)
     # train(save_path, load_path=load_path)
     # train(save_path, load_path=load_path, par_steps_done=6500)
-    eval(load_path=load_path)
+    # eval(load_path=load_path)

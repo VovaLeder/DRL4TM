@@ -86,7 +86,10 @@ class TMEnv(Env):
         self.action_to_command(action)
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -10 or self.total_reward > 1500):
+        if ((self.interface.client.finished and self.n_steps > 5)
+            or self.n_steps >= self.max_steps
+            or self.total_reward < -10
+            or self.total_reward > 1500):
             done = True
             if (self.total_reward > 1000):
                 print("yay!")
@@ -106,7 +109,10 @@ class TMEnv(Env):
 
 
         done = False
-        if (self.n_steps >= self.max_steps or self.total_reward < -10 or self.total_reward > 300):
+        if ((self.interface.client.finished and self.n_steps > 5)
+            or self.n_steps >= self.max_steps
+            or self.total_reward < -10
+            or self.total_reward > 1500):
             done = True
             if (self.total_reward > 1000):
                 print("yay!")
@@ -179,11 +185,11 @@ class TMEnv(Env):
         # print(f"speed: {speed}")
         # print(f"state: {cur_state}")
         if (speed > 0.05):
-            reward += speed
+            reward += speed * 3
         elif (speed > 0.03):
-            reward += speed / 1.1 
+            reward += speed * 2
         elif (speed > 0.02):
-            reward += speed / 2.2
+            reward += speed * 1
         elif (speed > 0.01):
             reward += speed / 3.3
         elif (speed > -0.01):
@@ -200,14 +206,12 @@ class TMEnv(Env):
                     reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 5000 - 0.15
             else:
                 if (LEVEL != 2):
-                    self.added_steps += 65 / GAME_SPEED
                     reward += 1
                 else:
                     if self.saved_cur > self.interface.state.cur:
                         reward -= 50
                     else:
-                        self.added_steps += 65 / GAME_SPEED
-                        reward += 7
+                        reward += 10
 
 
         if (LEVEL == 2):
@@ -221,7 +225,7 @@ class TMEnv(Env):
             reward += bad_angle_c * 50
 
         if (self.interface.client.finished and self.n_steps > 5):
-            reward += 200
+            reward += 50
 
         if (LEVEL == 0):
             if (cur_state[4] > 0.855):
