@@ -219,7 +219,7 @@ def eval(load_path):
                 break
 
 if __name__ == '__main__':
-    save_path = path.join(base_path, 'm1t4')
+    save_path = path.join(base_path, 'm1t5_256_256_')
     load_path = path.join(base_path, 'm1t3', '20240521070459501451.tar')
 
     train(save_path)

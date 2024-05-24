@@ -184,18 +184,18 @@ class TMEnv(Env):
 
         # print(f"speed: {speed}")
         # print(f"state: {cur_state}")
-        if (speed > 0.05):
-            reward += speed * 3
-        elif (speed > 0.03):
-            reward += speed * 2
-        elif (speed > 0.02):
-            reward += speed * 1
-        elif (speed > 0.01):
-            reward += speed / 3.3
+        if (speed > 0.5):
+            reward += speed * 1.5
+        elif (speed > 0.3):
+            reward += speed 
+        elif (speed > 0.2):
+            reward += speed / 5
+        elif (speed > 0.1):
+            reward += speed / 10
         elif (speed > -0.01):
-            reward += (-abs(speed)) / 3.3
+            reward += (-abs(speed))
         else:
-            reward += speed
+            reward += speed * 5
 
         if (self.previous_distance_to_curve != 0):
             if ((LEVEL != 2 and self.previous_curve_direction == cur_state[5])
@@ -203,7 +203,7 @@ class TMEnv(Env):
                 if (self.previous_distance_to_curve - cur_state[4] / 400 > 0.006):
                     reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 600
                 else:
-                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 5000 - 0.15
+                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 5000 - 0.2
             else:
                 if (LEVEL != 2):
                     reward += 1
@@ -225,7 +225,8 @@ class TMEnv(Env):
             reward += bad_angle_c * 50
 
         if (self.interface.client.finished and self.n_steps > 5):
-            reward += 50
+            reward += self.max_steps * 10 / self.n_steps
+            reward += 10
 
         if (LEVEL == 0):
             if (cur_state[4] > 0.855):
