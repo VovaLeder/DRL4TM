@@ -112,7 +112,9 @@ if __name__ == '__main__':
     while True:
         sleep(1)
         interface.step()
-        print(interface.state)
+        print(interface.client.sim_state.scene_mobil.has_any_lateral_contact)
+        # has_any_lateral_contact
+        # print(interface.state)
         
         # print(interface.client.sim_state.dyna.current_state.position)
 

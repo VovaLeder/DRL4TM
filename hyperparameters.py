@@ -7,8 +7,8 @@
 # LR is the learning rate of the ``AdamW`` optimizer
 BATCH_SIZE = 128
 GAMMA = 0.991
-EPS_START = 0.96
-EPS_END = 0.05
-EPS_DECAY = 6500
-TAU = 0.005
-LR = 1e-4
+EPS_START = 0.7
+EPS_END = 0.03
+EPS_DECAY = 100000
+TAU = 0.006
+LR = 0.00011

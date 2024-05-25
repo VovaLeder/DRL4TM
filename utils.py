@@ -51,9 +51,9 @@ def get_info_from_center_line_1(car_pos, car_rot):
 
     if (c1 == 0):
         if car_pos[0] < 544:
-            return car_pos[0] - 272, atan2(car_rot[0, 0], car_rot[0, 2]) - pi/2, (544 - car_pos[2]) / 20, -1
+            return car_pos[0] - 272, atan2(car_rot[0, 2], car_rot[0, 0]), (544 - car_pos[2]) / 20, -1
         elif car_pos[0] > 544:
-            return 752 - car_pos[0], atan2(car_rot[0, 0], car_rot[0, 2]) - pi/2, (car_pos[2] - 534) / 20, 0
+            return 752 - car_pos[0], atan2(car_rot[0, 2], -car_rot[0, 0]), (car_pos[2] - 534) / 20, 0
 
     return get_info_from_center_line_by2curves(car_pos, car_rot, c1, c2, ii % 2 == 1)
 
