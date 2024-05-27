@@ -11,8 +11,7 @@ from constants import LEVEL
 ACTION_SPACE = MultiBinary((4,))
 OBSERVATION_SPACE = Box(-1, 1, (6,)) if LEVEL != 2 else Box(-1, 1, (10,))
 
-GAME_SPEED = 2 # default = 1
-COMMAND_SPEED = 0.05
+GAME_SPEED = 1 # default = 1
 
 class TMEnv(Env):
     def __init__(self):
@@ -215,7 +214,7 @@ class TMEnv(Env):
                         reward += 10
 
         if (self.interface.client.sim_state.scene_mobil.has_any_lateral_contact):
-            reward -= 250
+            reward -= 2
 
         if (LEVEL == 2):
             self.saved_cur = self.interface.state.cur
@@ -239,5 +238,5 @@ class TMEnv(Env):
                 reward -= 20
 
         # print(f'current gained reward: {reward}')
-        # print(f'current accumulated reward: {self.total_reward}')
+        print(f'current accumulated reward: {self.total_reward}')
         return reward
