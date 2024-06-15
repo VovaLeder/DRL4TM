@@ -6,13 +6,26 @@ START_0 = 459.2
 END_0 = 809.6
 CENTER_0 = 368
 
+LEVEL_TYPE = 1 # 0 - sm, 1 - b
+CURVES_0 = [
+    [272, 0, 544],
+    [368, 0, 544],
+    [464, 0, 544],
+    [560, 0, 544],
+    [656, 0, 544],
+    [752, 0, 544],
+]
 CURVES_1 = [
+    [80, 0, 544],
+    [176, 0, 544],
     [272, 0, 544],
     [366, 0, 544],
     [464, 0, 544],
     [560, 0, 544],
     [656, 0, 544],
     [752, 0, 544],
+    [848, 0, 544],
+    [944, 0, 544],
 ]
 
 def get_info_from_center_line_0(car_pos, car_rot):
@@ -37,8 +50,9 @@ def get_info_from_center_line_by2curves(car_pos, car_rot, curve_pos1, curve_pos2
 
 def get_info_from_center_line_1(car_pos, car_rot):
     c1, c2 = 0, 0
-        
-    curves = list(map(lambda el: None if el[0] == len(CURVES_1) - 1 else [el[1], CURVES_1[el[0] + 1]], enumerate(CURVES_1)))
+    const_curves = CURVES_1 if LEVEL_TYPE == 1 else CURVES_0
+
+    curves = list(map(lambda el: None if el[0] == len(const_curves) - 1 else [el[1], const_curves[el[0] + 1]], enumerate(const_curves)))
     i = ii = 0
     for c in curves:
         if c == None:
@@ -51,9 +65,9 @@ def get_info_from_center_line_1(car_pos, car_rot):
 
     if (c1 == 0):
         if car_pos[0] < 544:
-            return car_pos[0] - 272, atan2(car_rot[0, 2], car_rot[0, 0]), (544 - car_pos[2]) / 20, -1
+            return car_pos[0] - const_curves[0][0], atan2(car_rot[0, 2], car_rot[0, 0]), (544 - car_pos[2]) / 35, -1
         elif car_pos[0] > 544:
-            return 752 - car_pos[0], atan2(car_rot[0, 2], -car_rot[0, 0]), (car_pos[2] - 534) / 20, 0
+            return const_curves[-1][0] - car_pos[0], atan2(car_rot[0, 2], -car_rot[0, 0]), (car_pos[2] - 534) / 35, 0
 
     return get_info_from_center_line_by2curves(car_pos, car_rot, c1, c2, ii % 2 == 1)
 

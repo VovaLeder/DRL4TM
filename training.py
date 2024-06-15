@@ -43,7 +43,7 @@ target_net = DQN(n_observations, n_actions).to(device)
 target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = optim.AdamW(policy_net.parameters(), lr=LR, amsgrad=True)
-memory = ReplayMemory(10000)
+memory = ReplayMemory(15000)
 
 
 steps_done = 0
@@ -99,7 +99,7 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
-def train(save_path, load_path=None, par_steps_done=None):
+def train(save_path, load_path=None, par_steps_done=None, eval=False):
     global target_net, policy_net, optimizer, steps_done
 
     steps_done = 0
@@ -121,7 +121,7 @@ def train(save_path, load_path=None, par_steps_done=None):
         # print(f'i_episode: {i_episode}')
         # Initialize the environment and get its state
 
-        if (i_episode % 50 == 0):
+        if (i_episode % 10 == 0):
             state = env.reset()
             os.makedirs(save_path, exist_ok=True)
             torch.save({
@@ -136,7 +136,7 @@ def train(save_path, load_path=None, par_steps_done=None):
         state = env.reset()
         state = torch.tensor(state, dtype=torch.float32, device=device).unsqueeze(0)
         for t in count():
-            action = select_action(state, eval_mode=False)
+            action = select_action(state, eval_mode=eval)
             observation, reward, terminated, info = env.step(action)
             reward = torch.tensor([reward], device=device)
             done = terminated
@@ -203,10 +203,10 @@ def eval(load_path):
                 break
 
 if __name__ == '__main__':
-    save_path = path.join(base_path, 'm1t9_128_128')
-    load_path = path.join(base_path, 'm1t6_192_192_kinda', '20240525091044755124.tar')
+    save_path = path.join(base_path, 'm0t2_128_128')
+    load_path = path.join(base_path, 'm0t2_128_128', '20240615133842135760.tar')
 
-    train(save_path)
-    # train(save_path, load_path=load_path, par_steps_done=0)
+    # train(save_path)
+    # train(save_path, load_path=load_path, eval=True)
     # train(save_path, load_path=load_path, par_steps_done=6500)
-    # eval(load_path=load_path)
+    eval(load_path=load_path)

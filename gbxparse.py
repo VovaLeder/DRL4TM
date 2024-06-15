@@ -2,7 +2,7 @@ from pygbx import Gbx, GbxType
 
 level_name = "Level2Big"
 
-g = Gbx(f'C:\\Users\\vovaleder\\Documents\\TmForever\\Tracks\Challenges\\My Challenges\\{level_name}.Challenge.Gbx')
+g = Gbx(f'C:\\Users\\vovaleder\\Documents\\TmForever\\Tracks\\Challenges\\My Challenges\\{level_name}.Challenge.Gbx')
 challenges = g.get_classes_by_ids([GbxType.CHALLENGE, GbxType.CHALLENGE_OLD])
 if not challenges:
     quit()

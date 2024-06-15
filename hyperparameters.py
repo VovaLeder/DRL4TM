@@ -6,9 +6,9 @@
 # TAU is the update rate of the target network
 # LR is the learning rate of the ``AdamW`` optimizer
 BATCH_SIZE = 128
-GAMMA = 0.991
-EPS_START = 0.7
-EPS_END = 0.03
-EPS_DECAY = 100000
-TAU = 0.006
-LR = 0.00011
+GAMMA = 0.9
+EPS_START = 0.9
+EPS_END = 0.05
+EPS_DECAY = 500
+TAU = 0.005
+LR = 0.0001

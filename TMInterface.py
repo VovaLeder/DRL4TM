@@ -1,4 +1,5 @@
 import random
+import time
 from tminterface.client import Client
 from tminterface.interface import TMInterface, SimStateData
 from tminterface.structs import CheckpointData
@@ -38,19 +39,27 @@ class SimStateClient(Client):
         self.actions = None
         self.finished = True
         self.should_reset = False
+        self.just_respawned = True
         self.tp_coords = []
 
     def on_run_step(self, iface: TMInterface, _time: int):
         self.iface = iface
         self.sim_state = iface.get_simulation_state()
         self.cp_data = iface.get_checkpoint_state()
-        if self.should_reset:
-            self.should_reset = False
-            self.finished = False
-            self.iface.respawn()
+
+        if self.just_respawned:
+            self.just_respawned = False
             if (LEVEL == 2):
                 coord = random.choice(self.tp_coords)
                 self.iface.execute_command(f"tp {coord[0]} {coord[1]} {coord[2]}")
+
+        if self.should_reset:
+            self.just_respawned = True
+            self.should_reset = False
+            self.finished = False
+            self.iface.respawn()
+            time.sleep(0.1)
+
         if self.actions != None:
             self.iface.set_input_state(**self.actions)
 
@@ -112,9 +121,9 @@ if __name__ == '__main__':
     while True:
         sleep(1)
         interface.step()
-        print(interface.client.sim_state.scene_mobil.has_any_lateral_contact)
+        # print(interface.client.sim_state.scene_mobil.has_any_lateral_contact)
         # has_any_lateral_contact
-        # print(interface.state)
+        print(interface.state)
         
         # print(interface.client.sim_state.dyna.current_state.position)
 

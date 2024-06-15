@@ -36,7 +36,7 @@ class TMEnv(Env):
         # self.simthread = ThreadedClient()
         self.total_reward = 0.0
         self.n_steps = 0
-        self.max_steps = (5000) if LEVEL == 2 else (500)
+        self.max_steps = (5000) if LEVEL == 2 else (750)
         self.command_frequency = 0.05 / GAME_SPEED
 
         # PrevStepValues
@@ -53,9 +53,9 @@ class TMEnv(Env):
             left = right = 0
         actions = {
             'accelerate': gas,
-            'brake': braking,
             'left': left,
-            'right': right
+            'right': right,
+            'brake': braking,
         }
         # print(f'actions: {actions}')
         self.interface.set_actions(**actions)
@@ -147,13 +147,16 @@ class TMEnv(Env):
 
         self.added_steps = 0
         self.total_reward = 0.0
-        self.n_steps = 0
+        self.n_steps = 1
         self.time = 0
         self.last_action = None
         self.previous_distance_to_curve = 0
         self.previous_speed = 0
         self.previous_curve_direction = 0
+        self.saved_cur = 0
+
         self._restart_race()
+        time.sleep(0.75)
         # time.sleep(0.05)
         
         # self.interface.interface.set
@@ -173,6 +176,9 @@ class TMEnv(Env):
 
     @property
     def reward(self):
+        if (self.n_steps <= -1):
+            return 0
+
         cur_state = self.observation
 
         reward = 0
@@ -183,30 +189,36 @@ class TMEnv(Env):
 
         # print(f"speed: {speed}")
         # print(f"state: {cur_state}")
-        speed *= (1 if LEVEL != 2 else 10)
-        if (speed > 0.5):
-            reward += speed * 1.5
-        elif (speed > 0.3):
-            reward += speed * 1.1
+        speed *= (1 if LEVEL != 2 else 5)
+        speed_reward = 0
+        if (speed > 0.45):
+            speed_reward += speed * 4
+        elif (speed > 0.27):
+            speed_reward += speed * 1.25
         elif (speed > 0.2):
-            reward += speed / 5
+            speed_reward += speed / 2
         elif (speed > 0.1):
-            reward += speed / 10
-        elif (speed > -0.01):
-            reward += (-abs(speed))
+            speed_reward += speed / 4
+        elif (speed > -0.001):
+            speed_reward += (-abs(speed)) / 10
         else:
-            reward += speed * 5
+            speed_reward += speed * 10
+        reward += speed_reward / 2
 
-        if (self.previous_distance_to_curve != 0 and self.n_steps >= 15):
+        if (self.previous_distance_to_curve != 0):
             if ((LEVEL != 2 and self.previous_curve_direction == cur_state[5])
                 or (LEVEL == 2 and self.saved_cur == self.interface.state.cur)):
-                if (self.previous_distance_to_curve - cur_state[4] / 400 > 0.006):
-                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 600
+                if (self.previous_distance_to_curve - cur_state[4] > 0.2):
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 100
+                elif (self.previous_distance_to_curve - cur_state[4] > 0.1):
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 50
+                elif (self.previous_distance_to_curve - cur_state[4] > 0):
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 25
                 else:
-                    reward += (self.previous_distance_to_curve - cur_state[4] / 400) * 5000 - 0.15
+                    reward += (self.previous_distance_to_curve - cur_state[4]) * 100
             else:
                 if (LEVEL != 2):
-                    reward += 3
+                    reward += 30
                 else:
                     if self.saved_cur > self.interface.state.cur:
                         reward -= 50
@@ -214,20 +226,20 @@ class TMEnv(Env):
                         reward += 10
 
         if (self.interface.client.sim_state.scene_mobil.has_any_lateral_contact):
-            reward -= 2
+            reward -= 0.25
 
         if (LEVEL == 2):
             self.saved_cur = self.interface.state.cur
         self.previous_speed = speed
-        self.previous_distance_to_curve = cur_state[4] / 400
+        self.previous_distance_to_curve = cur_state[4]
         self.previous_curve_direction = cur_state[5]
 
-        bad_angle_c = 0.75 - abs(cur_state[3])
+        bad_angle_c = 0.52 - abs(cur_state[3])
         if (bad_angle_c <= 0):
             reward += bad_angle_c * 50
 
-        if (self.interface.client.finished and self.n_steps >= 5):
-            reward += self.max_steps * 50 / self.n_steps
+        if (self.interface.client.finished):
+            reward += self.max_steps * 400 / self.n_steps
             reward += 10
 
         if (LEVEL == 0):
