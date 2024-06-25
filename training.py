@@ -74,11 +74,16 @@ def optimize_model():
         return
     transitions = memory.sample(BATCH_SIZE)
     batch = Transition(*zip(*transitions))
-
-    non_final_mask = torch.tensor(tuple(map(lambda s: s is not None,
-                                          batch.next_state)), device=device, dtype=torch.bool)
-    non_final_next_states = torch.cat([s for s in batch.next_state
-                                                if s is not None])
+    non_final_mask = torch.tensor(
+        tuple(map(lambda s: s is not None,
+                batch.next_state)),
+        device=device,
+        dtype=torch.bool
+    )
+    non_final_next_states = torch.cat(
+        [s for s in batch.next_state
+            if s is not None]
+        )
     state_batch = torch.cat(batch.state)
     action_batch = torch.cat(batch.action)
     reward_batch = torch.cat(batch.reward)
@@ -87,7 +92,9 @@ def optimize_model():
 
     next_state_values = torch.zeros(BATCH_SIZE, device=device)
     with torch.no_grad():
-        next_state_values[non_final_mask] = target_net(non_final_next_states).max(1).values
+        next_state_values[non_final_mask] = target_net(
+            non_final_next_states
+        ).max(1).values
 
     expected_state_action_values = (next_state_values * GAMMA) + reward_batch
 
@@ -203,8 +210,8 @@ def eval(load_path):
                 break
 
 if __name__ == '__main__':
-    save_path = path.join(base_path, 'm0t2_128_128')
-    load_path = path.join(base_path, 'm0t2_128_128', '20240615133842135760.tar')
+    save_path = path.join(base_path, 'm1t3_128_128')
+    load_path = path.join(base_path, 'm1t20_128_128_could_be_beautifuk', '20240608061918710111.tar')
 
     # train(save_path)
     # train(save_path, load_path=load_path, eval=True)
